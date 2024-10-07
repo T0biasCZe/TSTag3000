@@ -1,0 +1,183 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Diagnostics;
+using System.Reflection.Emit;
+using Timer = System.Windows.Forms.Timer;
+using Plasmoid.Extensions;
+using System.Drawing.Imaging;
+
+namespace TSTag3000
+{
+	public partial class BlurPanel : Panel {
+		public BlurPanel() {
+			InitializeComponent();
+			if(refreshInterval == 0) refreshInterval = 10000;
+			if(downsizeAmount == 0) downsizeAmount = 1;
+			if(minElapsedMs == 0) minElapsedMs = 1000;
+
+			BackColor = Color.Transparent;
+			BorderStyle = BorderStyle.None;
+			timer.Tick += timer_Tick;
+			timer.Start();
+		}
+		[Category("Data"), Description("How many times downscale the image before blur to speed up processing. 4 recommended.")]
+		public bool skipPaint { get; set; }
+
+		[Category("Data"), Description("How many times downscale the image before blur to speed up processing. 4 recommended.")]
+		public int downsizeAmount { get; set; }
+		[Category("Data"), Description("Minimal time between refresh.")]
+		public int minElapsedMs { get; set; }
+		[Category("Data"), Description("How often to refresh in ms.")]
+		public int refreshInterval { get; set; }
+		[Category("Data"), Description("Blur amount.")]
+		public int blurAmount { get; set; }
+		[Category("Data"), Description("Round border amount (0 to disable).")]
+		public int roundCorners { get; set; }
+		Timer timer = new Timer();
+
+		private void timer_Tick(object? sender, EventArgs e) {
+			this.Refresh();
+			if(refreshInterval > 10) timer.Interval = refreshInterval;
+			else timer.Interval = 1000;
+		}
+
+		Stopwatch stopwatch = new Stopwatch();
+		bool stillRunning = false;
+		int abortedCount = 0;
+		Bitmap finalBmp;
+		Queue<long> timeTaken = new Queue<long>();
+		bool firstRun = true;
+		protected override void OnPaint(PaintEventArgs e) {
+			if(skipPaint) {
+				base.OnPaint(e);
+				return;
+			}
+			/*if in design mode, do not run the code*/
+			if(DesignMode || System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime) {
+				base.OnPaint(e);
+				return;
+			}
+
+			if(stillRunning) {
+				abortedCount++;
+				return;
+			}
+			if(!stopwatch.IsRunning || stopwatch.ElapsedMilliseconds > minElapsedMs) {
+
+				stillRunning = true;
+				stopwatch.Restart();
+
+				// Offload image processing to a background thread
+				Task.Run(() => {
+					Bitmap bmp = new Bitmap(this.Parent.Width, this.Parent.Height);
+
+
+					// Draw the form content into a bitmap (this must happen on the UI thread)
+					this.Invoke((Action)(() => {
+						this.Visible = false;
+						this.Parent.DrawToBitmap(bmp, new Rectangle(0, 0, this.Parent.Width, this.Parent.Height));
+						this.Visible = true;
+					}));
+
+
+					Rectangle cropRectangle = new Rectangle(this.Left - downsizeAmount, this.Top - downsizeAmount, this.Width, this.Height);
+					Rectangle cropRectangleNoOffset = new Rectangle(this.Left, this.Top, this.Width, this.Height);
+					Bitmap croppedBmp = bmp.Clone(cropRectangle, bmp.PixelFormat);
+					Bitmap croppedBmpNoOffset = bmp.Clone(cropRectangleNoOffset, bmp.PixelFormat);
+					bmp.Dispose();
+
+					//downscale the image to fourth of the size, to speed up the blur
+					Bitmap scaledBmp = new Bitmap(croppedBmp, new Size(croppedBmp.Width / downsizeAmount, croppedBmp.Height / downsizeAmount));
+					croppedBmp.Dispose();
+
+					Bitmap blurredBmp = null;
+					if(blurAmount > 1) {
+						blurredBmp = BlurUtil.Blur(scaledBmp, blurAmount);
+						scaledBmp.Dispose();
+					}
+					else {
+						blurredBmp = scaledBmp;
+						using(Graphics g = Graphics.FromImage(blurredBmp)) {
+							g.DrawString("NB", new Font("Verdana", 5), new SolidBrush(Color.White), 0, 0);
+						}
+					}
+
+
+					// Upscale the image back to the original size
+					finalBmp = new Bitmap(blurredBmp, new Size(this.Width, this.Height));
+					blurredBmp.Dispose();
+
+					if(roundCorners > 1) {
+						Bitmap mask = new Bitmap(finalBmp.Width, finalBmp.Height);
+						using(Graphics maskg = Graphics.FromImage(mask)) {
+							maskg.Clear(Color.Black);
+							maskg.DrawRoundedRectangle(new Pen(Color.White, 1), 0, 0, mask.Width, mask.Height, roundCorners);
+							maskg.FillRoundedRectangle(new SolidBrush(Color.White), 0, 0, mask.Width, mask.Height, roundCorners);
+						}
+
+						BitmapData croppedData = croppedBmpNoOffset.LockBits(new Rectangle(0, 0, croppedBmpNoOffset.Width, croppedBmpNoOffset.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+						BitmapData finalData = finalBmp.LockBits(new Rectangle(0, 0, finalBmp.Width, finalBmp.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+						BitmapData maskData = mask.LockBits(new Rectangle(0, 0, mask.Width, mask.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+						int bytesPerPixel = 4;
+						int height = finalBmp.Height;
+						int width = finalBmp.Width;
+
+						unsafe {
+							byte* croppedPtr = (byte*)croppedData.Scan0;
+							byte* finalPtr = (byte*)finalData.Scan0;
+							byte* maskPtr = (byte*)maskData.Scan0;
+
+							for(int y = 0; y < height; y++) {
+								for(int x = 0; x < width; x++) {
+									int index = (y * croppedData.Stride) + (x * bytesPerPixel);
+									if(maskPtr[index] < 250) { // Check if the mask pixel is white
+										finalPtr[index] = croppedPtr[index];       // Blue
+										finalPtr[index + 1] = croppedPtr[index + 1]; // Green
+										finalPtr[index + 2] = croppedPtr[index + 2]; // Red
+										finalPtr[index + 3] = croppedPtr[index + 3]; // Alpha
+									}
+								}
+							}
+						}
+
+						/* Unlock the bits */
+						croppedBmpNoOffset.UnlockBits(croppedData);
+						finalBmp.UnlockBits(finalData);
+						mask.UnlockBits(maskData);
+					}
+
+
+
+					// Once the processing is done, update the UI on the main thread
+					this.Invoke((Action)(() => {
+						this.BackgroundImage = finalBmp;
+
+						/*label1.Text = "Time taken: " + stopwatch.ElapsedMilliseconds + "ms" +
+										" LR: " + DateTime.Now +
+										" PW: " + this.Width +
+										" PH: " + this.Height +
+										" PX: " + panel1.Left +
+										" PY: " + panel1.Top;*/
+						stillRunning = false;
+
+						if(!firstRun) timeTaken.Enqueue(stopwatch.ElapsedMilliseconds);
+						if(timeTaken.Count > 30) timeTaken.Dequeue();
+						long average = timeTaken.Count > 0 ? (long)timeTaken.Average() : 0;
+						using(Graphics g = Graphics.FromImage(finalBmp)){
+							g.DrawString(stopwatch.ElapsedMilliseconds + " " + average + " " + timeTaken.Count, new Font("Verdana", 9), new SolidBrush(Color.White), new PointF(10, this.Height - 20));
+						}
+						firstRun = false;
+					}));
+				});
+			}
+		}
+	}
+}
