@@ -1,7 +1,12 @@
+using TSTag3000.UI;
+using static TSTag3000.UI.AeroUtil;
+
 namespace TSTag3000 {
 	public partial class Form1 : Form {
 		public static Form1 form;
 		public Form1() {
+			this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+
 			InitializeComponent();
 			form = this;
 			//dont allow resizing
@@ -9,12 +14,13 @@ namespace TSTag3000 {
 			this.MaximizeBox = false;
 
 			try {
-				TIOS.Init();
-				TIOS.LoadDatabase();
+				Database.Init();
 			}
 			catch(Exception e) {
 				MessageBox.Show(e.ToString());
 			}
+
+			AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
 		}
 		public static int currentPage = 0;
 		public static StartPage startPage;
@@ -43,8 +49,7 @@ namespace TSTag3000 {
 			currentPage = 1;
 			form.Controls.Clear();
 			form.Controls.Add(managePage);
-
-			form.Form1_Resize(null, null);
+			form.Size = new Size(1120 + HORIZONTAL_BORDER, 680 + VERTICAL_BORDER);
 		}
 
 		//Windows border size
@@ -55,6 +60,16 @@ namespace TSTag3000 {
 				managePage.Width = this.Width - HORIZONTAL_BORDER;
 				managePage.Height = this.Height - VERTICAL_BORDER;
 			}
+		}
+		public static void OnProcessExit(object sender, EventArgs e) {
+			Database.SaveShutdown();
+		}
+
+		protected override void OnPaintBackground(PaintEventArgs e) {
+			AeroUtil.ApplyBlurEffect(this.Handle);
+
+			Rectangle rect = new Rectangle(0, 88, this.Width, this.Height - 88);
+			e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(255, 255, 255)), rect);
 		}
 	}
 }

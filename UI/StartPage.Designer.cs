@@ -34,7 +34,6 @@ namespace TSTag3000
 			label2 = new Label();
 			pictureBox1 = new PictureBox();
 			label1 = new Label();
-			button1 = new Button();
 			label3 = new Label();
 			label4 = new Label();
 			timer2 = new System.Windows.Forms.Timer(components);
@@ -111,15 +110,6 @@ namespace TSTag3000
 			label1.Size = new Size(38, 15);
 			label1.TabIndex = 2;
 			label1.Text = "label1";
-			// 
-			// button1
-			// 
-			button1.Location = new Point(0, 0);
-			button1.Name = "button1";
-			button1.Size = new Size(75, 23);
-			button1.TabIndex = 3;
-			button1.Text = "button1";
-			button1.UseVisualStyleBackColor = true;
 			// 
 			// label3
 			// 
@@ -260,7 +250,6 @@ namespace TSTag3000
 			Controls.Add(label1);
 			Controls.Add(label4);
 			Controls.Add(label3);
-			Controls.Add(button1);
 			Controls.Add(pictureBox1);
 			Name = "StartPage";
 			Size = new Size(900, 672);
@@ -276,7 +265,6 @@ namespace TSTag3000
 		#endregion
 		private PictureBox pictureBox1;
 		private Label label1;
-		private Button button1;
 		private Label label2;
 		private Button button_Search;
 		private TextBox textBox1;
