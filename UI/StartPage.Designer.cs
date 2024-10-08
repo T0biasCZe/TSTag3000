@@ -83,7 +83,7 @@ namespace TSTag3000
 			// label2
 			// 
 			label2.BackColor = Color.Transparent;
-			label2.Font = new Font("Xolonium", 50.2499924F, FontStyle.Bold, GraphicsUnit.Point, 0);
+			label2.Font = new Font("Microsoft Sans Serif", 50.2499924F, FontStyle.Bold, GraphicsUnit.Point, 0);
 			label2.ForeColor = Color.FromArgb(192, 255, 192);
 			label2.Location = new Point(0, 8);
 			label2.Name = "label2";
@@ -138,7 +138,7 @@ namespace TSTag3000
 			// label5
 			// 
 			label5.AutoSize = true;
-			label5.Location = new Point(152, 648);
+			label5.Location = new Point(194, 648);
 			label5.Name = "label5";
 			label5.Size = new Size(32, 15);
 			label5.TabIndex = 12;
@@ -155,10 +155,10 @@ namespace TSTag3000
 			blurPanel1.Controls.Add(textBox1);
 			blurPanel1.downsizeAmount = 8;
 			blurPanel1.Location = new Point(208, 184);
-			blurPanel1.minElapsedMs = 300;
+			blurPanel1.minElapsedMs = 1000;
 			blurPanel1.Name = "blurPanel1";
-			blurPanel1.refreshInterval = 310;
-			blurPanel1.roundCorners = 0;
+			blurPanel1.refreshInterval = 1000;
+			blurPanel1.roundCorners = 20;
 			blurPanel1.Size = new Size(480, 152);
 			blurPanel1.skipPaint = false;
 			blurPanel1.TabIndex = 13;
@@ -171,10 +171,10 @@ namespace TSTag3000
 			blurPanel3.Controls.Add(label6);
 			blurPanel3.downsizeAmount = 8;
 			blurPanel3.Location = new Point(208, 442);
-			blurPanel3.minElapsedMs = 100;
+			blurPanel3.minElapsedMs = 1000;
 			blurPanel3.Name = "blurPanel3";
-			blurPanel3.refreshInterval = 200;
-			blurPanel3.roundCorners = 5;
+			blurPanel3.refreshInterval = 1000;
+			blurPanel3.roundCorners = 20;
 			blurPanel3.Size = new Size(480, 94);
 			blurPanel3.skipPaint = false;
 			blurPanel3.TabIndex = 1;
@@ -202,10 +202,10 @@ namespace TSTag3000
 			blurPanel2.Controls.Add(numDisplay1);
 			blurPanel2.downsizeAmount = 8;
 			blurPanel2.Location = new Point(208, 344);
-			blurPanel2.minElapsedMs = 3000;
+			blurPanel2.minElapsedMs = 1000;
 			blurPanel2.Name = "blurPanel2";
-			blurPanel2.refreshInterval = 3010;
-			blurPanel2.roundCorners = 0;
+			blurPanel2.refreshInterval = 1000;
+			blurPanel2.roundCorners = 20;
 			blurPanel2.Size = new Size(480, 86);
 			blurPanel2.skipPaint = false;
 			blurPanel2.TabIndex = 0;
@@ -239,8 +239,8 @@ namespace TSTag3000
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
-			BackColor = Color.Transparent;
-			BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
+			BackColor = Color.White;
+			BackgroundImage = Properties.Resources.startPage1_BackgroundImage;
 			BackgroundImageLayout = ImageLayout.Stretch;
 			Controls.Add(button2);
 			Controls.Add(blurPanel3);

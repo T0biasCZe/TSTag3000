@@ -23,14 +23,12 @@
 		///  the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent() {
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			startPage1 = new StartPage();
 			SuspendLayout();
 			// 
 			// startPage1
 			// 
 			startPage1.BackColor = Color.Transparent;
-			startPage1.BackgroundImage = (Image)resources.GetObject("startPage1.BackgroundImage");
 			startPage1.BackgroundImageLayout = ImageLayout.Stretch;
 			startPage1.Location = new Point(0, 0);
 			startPage1.Name = "startPage1";

@@ -37,18 +37,16 @@ namespace TSTag3000 {
 			toolStripButton_generateThumbnail = new ToolStripButton();
 			toolStripButton_batchGenerateThumbnail = new ToolStripButton();
 			imageList1 = new ImageList(components);
-			listBox1 = new ListBox();
+			listBox_tags = new ListBox();
 			toolTip1 = new ToolTip(components);
 			comboBox1 = new ComboBox();
 			textBox_explorerPath = new TextBox();
 			panel_info = new Panel();
 			label1 = new Label();
-			animationBox1 = new AnimationBox();
 			explorerBrowser1 = new Microsoft.WindowsAPICodePack.Controls.WindowsForms.ExplorerBrowser();
 			panel_left.SuspendLayout();
 			toolStrip1.SuspendLayout();
 			panel_info.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)animationBox1).BeginInit();
 			SuspendLayout();
 			// 
 			// panel_left
@@ -171,14 +169,14 @@ namespace TSTag3000 {
 			imageList1.ImageSize = new Size(16, 16);
 			imageList1.TransparentColor = Color.Transparent;
 			// 
-			// listBox1
+			// listBox_tags
 			// 
-			listBox1.FormattingEnabled = true;
-			listBox1.ItemHeight = 15;
-			listBox1.Location = new Point(936, 158);
-			listBox1.Name = "listBox1";
-			listBox1.Size = new Size(176, 514);
-			listBox1.TabIndex = 3;
+			listBox_tags.FormattingEnabled = true;
+			listBox_tags.ItemHeight = 15;
+			listBox_tags.Location = new Point(936, 158);
+			listBox_tags.Name = "listBox_tags";
+			listBox_tags.Size = new Size(176, 514);
+			listBox_tags.TabIndex = 3;
 			// 
 			// comboBox1
 			// 
@@ -199,7 +197,6 @@ namespace TSTag3000 {
 			// 
 			panel_info.BackColor = Color.Transparent;
 			panel_info.Controls.Add(label1);
-			panel_info.Controls.Add(animationBox1);
 			panel_info.Location = new Point(888, 88);
 			panel_info.Name = "panel_info";
 			panel_info.Size = new Size(232, 40);
@@ -214,17 +211,6 @@ namespace TSTag3000 {
 			label1.TabIndex = 1;
 			label1.Text = "label1";
 			label1.TextAlign = ContentAlignment.TopRight;
-			// 
-			// animationBox1
-			// 
-			animationBox1.Image = (Image)resources.GetObject("animationBox1.Image");
-			animationBox1.Location = new Point(208, 0);
-			animationBox1.msPerFrame = 100;
-			animationBox1.Name = "animationBox1";
-			animationBox1.Size = new Size(24, 24);
-			animationBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-			animationBox1.TabIndex = 0;
-			animationBox1.TabStop = false;
 			// 
 			// explorerBrowser1
 			// 
@@ -245,7 +231,7 @@ namespace TSTag3000 {
 			Controls.Add(panel_info);
 			Controls.Add(textBox_explorerPath);
 			Controls.Add(comboBox1);
-			Controls.Add(listBox1);
+			Controls.Add(listBox_tags);
 			Controls.Add(toolStrip1);
 			Controls.Add(panel_left);
 			Name = "ManagePage";
@@ -256,7 +242,6 @@ namespace TSTag3000 {
 			toolStrip1.ResumeLayout(false);
 			toolStrip1.PerformLayout();
 			panel_info.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)animationBox1).EndInit();
 			ResumeLayout(false);
 			PerformLayout();
 		}
@@ -268,7 +253,7 @@ namespace TSTag3000 {
 		private ImageList imageList1;
 		private Button button_addAlbum;
 		private ToolStripButton toolStripButton_addToAlbum;
-		private ListBox listBox1;
+		private ListBox listBox_tags;
 		private ToolTip toolTip1;
 		private ComboBox comboBox1;
 		private ToolStripButton toolStripButton_ffmpegTag;

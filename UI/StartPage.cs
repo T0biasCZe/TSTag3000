@@ -31,6 +31,11 @@ namespace TSTag3000 {
 		int counter2 = 0;
 		bool saving = false;
 		List<BlurPanel> blurPanels = new List<BlurPanel>();
+		Stopwatch stopwatch1 = new Stopwatch();
+		Stopwatch stopwatch2 = new Stopwatch();
+		Queue<int> queue1 = new Queue<int>();
+		Queue<int> queue2 = new Queue<int>();
+
 		private void timer_bitmap_Tick(object sender, EventArgs e) {
 			if(bitmapBeingRead || saving) {
 				timer_bitmap.Interval = 10;
@@ -46,6 +51,7 @@ namespace TSTag3000 {
 					}
 				}
 			}
+			stopwatch1.Restart();
 			counter1 += 1;
 			label4.Text = "CBM " + counter1;
 			timer_bitmap.Interval = 10;
@@ -54,7 +60,10 @@ namespace TSTag3000 {
 			foreach(BlurPanel blurPanel in blurPanels) {
 				blurPanel.Visible = false;
 			}
+
+			stopwatch2.Restart();
 			this.DrawToBitmap(bitmap, new Rectangle(0, 0, this.Width, this.Height));
+			stopwatch2.Stop();
 			foreach(BlurPanel blurPanel in blurPanels) {
 				blurPanel.Visible = true;
 			}
@@ -62,6 +71,16 @@ namespace TSTag3000 {
 			cachedFormBitmap = bitmap;
 			bitmapBeingWritten = false;
 			saving = false;
+			stopwatch1.Stop();
+
+			queue1.Enqueue((int)stopwatch1.ElapsedMilliseconds);
+			queue2.Enqueue((int)stopwatch2.ElapsedMilliseconds);
+			if(queue1.Count > 40) {
+				queue1.Dequeue();
+				queue2.Dequeue();
+			}
+			label1.Text = queue1.Count().ToString();
+			label3.Text = "SW2 " + (int)queue2.Average() + " SW1 " + (int)queue1.Average();
 		}
 
 		private void numDisplay1_Load(object sender, EventArgs e) {

@@ -106,9 +106,6 @@ namespace TSTag3000
 
 				bmp = (Bitmap)StartPage.cachedFormBitmap.Clone(cropRectangle, PixelFormat.Format32bppArgb);
 
-				if(this.Name == "blurPanel3") {
-					bmp.Save("panel3.png", ImageFormat.Png);
-				}
 				StartPage.bitmapBeingRead = false;
 
 				// Offload image processing to a background thread
@@ -133,21 +130,26 @@ namespace TSTag3000
 						//else no blur and no downscaling, so no processing needed
 					}
 
-					/*if(roundCorners > 1) {
-						Bitmap mask = new Bitmap(finalBmp.Width, finalBmp.Height);
+					if(roundCorners > 1) {
+						bmp = new Bitmap(bmp, new Size(cropRectangle.Width, cropRectangle.Height));
+
+						Rectangle cropRectangle2 = new Rectangle(this.Left - downsizeAmount, this.Top - downsizeAmount, this.Width + downsizeAmount, this.Height + downsizeAmount);
+						Bitmap croppedBmp = (Bitmap)StartPage.cachedFormBitmap.Clone(cropRectangle2, PixelFormat.Format32bppArgb);
+
+						Bitmap mask = new Bitmap(bmp.Width, bmp.Height);
 						using(Graphics maskg = Graphics.FromImage(mask)) {
 							maskg.Clear(Color.Black);
 							maskg.DrawRoundedRectangle(new Pen(Color.White, 1), 0, 0, mask.Width, mask.Height, roundCorners);
 							maskg.FillRoundedRectangle(new SolidBrush(Color.White), 0, 0, mask.Width, mask.Height, roundCorners);
 						}
 
-						BitmapData croppedData = croppedBmp.LockBits(new Rectangle(0, 0, croppedBmpNoOffset.Width, croppedBmpNoOffset.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-						BitmapData finalData = finalBmp.LockBits(new Rectangle(0, 0, finalBmp.Width, finalBmp.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+						BitmapData croppedData = croppedBmp.LockBits(new Rectangle(0, 0, croppedBmp.Width, croppedBmp.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+						BitmapData finalData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
 						BitmapData maskData = mask.LockBits(new Rectangle(0, 0, mask.Width, mask.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 
 						int bytesPerPixel = 4;
-						int height = finalBmp.Height;
-						int width = finalBmp.Width;
+						int height = bmp.Height;
+						int width = bmp.Width;
 
 						unsafe {
 							byte* croppedPtr = (byte*)croppedData.Scan0;
@@ -168,10 +170,10 @@ namespace TSTag3000
 						}
 
 						//Unlock the bits
-						croppedBmpNoOffset.UnlockBits(croppedData);
-						finalBmp.UnlockBits(finalData);
+						croppedBmp.UnlockBits(croppedData);
+						bmp.UnlockBits(finalData);
 						mask.UnlockBits(maskData);
-					}*/
+					}
 
 
 

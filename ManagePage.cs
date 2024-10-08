@@ -26,8 +26,8 @@ namespace TSTag3000 {
 
 			explorerBrowser1.Width = this.Width - 392;
 			explorerBrowser1.Height = this.Height - toolStrip1.Height - 48;
-			listBox1.Left = this.Width - 184;
-			listBox1.Height = this.Height - toolStrip1.Height - 78;
+			listBox_tags.Left = this.Width - 184;
+			listBox_tags.Height = this.Height - toolStrip1.Height - 78;
 			comboBox1.Left = this.Width - 184;
 			panel_info.Left = this.Width - 224;
 			button_addAlbum.Top = listBox_albums.Height + listBox_albums.Top + 8;
@@ -130,8 +130,8 @@ namespace TSTag3000 {
 				command.Parameters.AddWithValue("@path", item.ParsingName);
 				var reader = command.ExecuteReader();
 				if(reader.Read()) {
-					int fileInItems = listBox1.Items.IndexOf(item.ParsingName);
-					label1.Text = $"Creating thumbnail {fileInItems + 1}/{listBox1.Items.Count}...";
+					int fileInItems = listBox_tags.Items.IndexOf(item.ParsingName);
+					label1.Text = $"Creating thumbnail {fileInItems + 1}/{listBox_tags.Items.Count}...";
 					//file is in the database
 					Bitmap bitmap = new Bitmap(item.ParsingName);
 					Size inputBitmapSize = bitmap.Size;
@@ -174,7 +174,20 @@ namespace TSTag3000 {
 		}
 
 		private void explorerBrowser1_SelectionChanged(object sender, EventArgs e) {
+			var selectedItems = explorerBrowser1.SelectedItems;
+			listBox_tags.Items.Clear();
+			if(selectedItems.Count() == 0){
+				return;
+			}
+			else if(selectedItems.Count() == 1) {
 
+				var selectedItem = selectedItems[0];
+				//check in database if there is entry in FileMetadata table, if there is put it in FileMetadata object, else create new object
+
+			}
+			else {
+				listBox_tags.Items.Add("Tag view N/A in batch edit");
+			}
 		}
 
 	}
