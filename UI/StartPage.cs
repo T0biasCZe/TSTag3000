@@ -54,7 +54,7 @@ namespace TSTag3000 {
 			stopwatch1.Restart();
 			counter1 += 1;
 			label4.Text = "CBM " + counter1;
-			timer_bitmap.Interval = 10;
+			timer_bitmap.Interval = 250;
 			Bitmap bitmap = new Bitmap(this.Width, this.Height);
 
 			foreach(BlurPanel blurPanel in blurPanels) {
@@ -88,6 +88,20 @@ namespace TSTag3000 {
 		}
 
 		private void button_manage_Click(object sender, EventArgs e) {
+			Label label_loading = new Label();
+			label_loading.Text = "Loading...";
+			label_loading.Font = new Font("Arial", 120);
+			label_loading.AutoSize = true;
+			label_loading.ForeColor = Color.White;
+			label_loading.Location = new Point(100, 240);
+			this.Controls.Add(label_loading);
+			label_loading.BringToFront();
+			label_loading.Visible = true;
+			label_loading.Refresh();
+			label_loading.Invalidate();
+			label_loading.Update();
+			//Thread.Sleep(500);
+
 			Form1.LoadManagePage();
 		}
 	}

@@ -9,54 +9,136 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using TSTag3000.db;
+using TSTag3000.UI;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace TSTag3000 {
 	public partial class ManagePage : UserControl {
 		public ManagePage() {
 			InitializeComponent();
 			this.BackColor = Color.Transparent;
-
-			ManagePage_Resize(null, null);
+			this.DoubleBuffered = false;
 		}
 
 		private void ManagePage_Resize(object sender, EventArgs e) {
 			panel_left.Height = this.Height - toolStrip1.Height;
-			listBox_albums.Height = panel_left.Height - 40;
+
+			int halfPanelHeight = panel_left.Height / 2;
+
+			listBox_albums.Height = halfPanelHeight - 40;
+			button_addAlbum.Top = listBox_albums.Height + listBox_albums.Top + 8;
+			button1.Top = listBox_albums.Height + listBox_albums.Top + 8;
+
+			listBox_categories.Height = halfPanelHeight - 40;
+			listBox_categories.Top = listBox_albums.Top + halfPanelHeight;
+			button2.Top = listBox_categories.Top + listBox_categories.Height + 8;
+			button_addCategory.Top = listBox_categories.Top + listBox_categories.Height + 8;
 
 
 			explorerBrowser1.Width = this.Width - 392;
 			explorerBrowser1.Height = this.Height - toolStrip1.Height - 48;
 			listBox_tags.Left = this.Width - 184;
-			listBox_tags.Height = this.Height - toolStrip1.Height - 78;
-			comboBox1.Left = this.Width - 184;
+			listBox_tags.Height = this.Height - toolStrip1.Height - 138;
+			comboBox_addTag.Left = this.Width - 184;
+			comboBox_tagCategory.Left = this.Width - 184;
+			button_addtag.Left = this.Width - 184 + comboBox_tagCategory.Width + 5;
+			label_albumname.Left = this.Width - 184;
 			panel_info.Left = this.Width - 224;
-			button_addAlbum.Top = listBox_albums.Height + listBox_albums.Top + 8;
-			button1.Top = listBox_albums.Height + listBox_albums.Top + 8;
 			textBox_explorerPath.Width = this.Width - 392 - 64;
 
 			toolStrip1.Width = this.Width + 10;
 
+
+			try {
+				using(Graphics g = this.CreateGraphics()) {
+					Rectangle rect = new Rectangle(0, 88, this.Width, this.Height - 88);
+					g.FillRectangle(new SolidBrush(Color.White), rect);
+				}
+			}
+			catch(Exception ex) {
+				MessageBox.Show(ex.Message, "Error");
+			}
 		}
 
 		private void ManagePage_Load(object sender, EventArgs e) {
 			loadAlbumList();
-			explorerBrowser1.Show();
+			loadCategoriesList();
+			loadComboBox();
+
+			ManagePage_Resize(null, null);
 		}
 		private void loadAlbumList() {
 			/*load table "album" from database and add to listBox_albums*/
 			listBox_albums.Items.Clear();
+
 			var connection = Database.connection;
 			connection.Open();
 			var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM album", connection);
 			var reader = command.ExecuteReader();
+			List<string> albums = new List<string>();
 			while(reader.Read()) {
-				listBox_albums.Items.Add(reader["name"]);
+				albums.Add(reader["name"].ToString());
 			}
+			listBox_albums.Items.AddRange(albums.ToArray());
+			connection.Close();
+		}
+		private void loadCategoriesList() {
+			/*load table "category" from database and add to listBox_categories*/
+			listBox_categories.Items.Clear();
+
+			var connection = Database.connection;
+			connection.Open();
+			var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM category", connection);
+			var reader = command.ExecuteReader();
+			List<string> categories = new List<string>();
+			while(reader.Read()) {
+				categories.Add(reader["name"].ToString());
+			}
+			listBox_categories.Items.AddRange(categories.ToArray());
 			connection.Close();
 		}
 
 		private void button1_Click(object sender, EventArgs e) {
 			loadAlbumList();
+		}
+
+		private void loadComboBox() {
+			List<Tag> tags = Database.GetTags("");
+			label2.Text = "Tags: " + tags.Count;
+			comboBox_addTag.Items.Clear();
+			//tag colour mapping:
+			//meta tag - blue
+			//copyright tag - green
+			//character tag - aqua
+			//artist tag - red
+			//general tag - yellow
+			//other tag - black
+
+			//List<string> order = new List<string>() { "meta", "general", "artist", "character", "copyright" };
+			List<string> order = new List<string>() { "copyright", "character", "artist", "general", "meta" };
+			tags = tags.OrderBy(t => order.IndexOf(t.type)).ToList();
+
+
+			foreach(var tag in tags) {
+				Color colour = Color.Black;
+				if(tag.type == "meta") {
+					colour = Color.Blue;
+				}
+				else if(tag.type == "copyright") {
+					colour = Color.Green;
+				}
+				else if(tag.type == "character") {
+					colour = Color.Aqua;
+				}
+				else if(tag.type == "artist") {
+					colour = Color.Red;
+				}
+				else if(tag.type == "general") {
+					colour = Color.Gold;
+				}
+				comboBox_addTag.Items.Add(new ComboBoxItem(tag.name, tag.ID, colour));
+			}
 		}
 
 		private void explorerBrowser1_Load(object sender, EventArgs e) {
@@ -176,19 +258,212 @@ namespace TSTag3000 {
 		private void explorerBrowser1_SelectionChanged(object sender, EventArgs e) {
 			var selectedItems = explorerBrowser1.SelectedItems;
 			listBox_tags.Items.Clear();
-			if(selectedItems.Count() == 0){
+			if(selectedItems.Count() == 0) {
 				return;
 			}
 			else if(selectedItems.Count() == 1) {
 
 				var selectedItem = selectedItems[0];
 				//check in database if there is entry in FileMetadata table, if there is put it in FileMetadata object, else create new object
+				var connection = Database.connection;
+				connection.Open();
+				var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+				command.Parameters.AddWithValue("@path", selectedItem.ParsingName);
+				var reader = command.ExecuteReader();
+				FileMetadata fileMetadata = new FileMetadata();
+				int i = 0;
+				int j = 0;
+				if(reader.Read()) {
+					try {
+						fileMetadata.ID = (int)(long)reader["id"];
+						fileMetadata.path = (string)reader["path"];
+						//load thumbnail from blob (jpeg)
+						//byte[] thumbnail = (byte[])reader["thumbnail"];
+						//System.IO.MemoryStream stream = new System.IO.MemoryStream(thumbnail);
+						//fileMetadata.thumbnail = new Bitmap(stream);
+						//stream.Close();
+						//load tags from database, from table "tag" and connecting table "FileMetadata_has_tag"
+						command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID", connection);
+						command.Parameters.AddWithValue("@FileMetadata_ID", fileMetadata.ID);
+						reader = command.ExecuteReader();
+						while(reader.Read()) {
+							i++;
+							command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE id = @id", connection);
+							command.Parameters.AddWithValue("@id", (int)(long)reader["tag_ID"]);
+							var reader2 = command.ExecuteReader();
+							if(reader2.Read()) {
+								j++;
+								Tag tag = new Tag();
+								tag.ID = (int)(long)reader2["id"];
+								tag.name = (string)reader2["name"];
+								tag.type = (string)reader2["type"];
+								fileMetadata.tags.Add(tag);
+							}
+						}
+					}
+					catch(Exception ex) {
+						MessageBox.Show(ex.ToString());
+					}
+				}
+				else {
+
+				}
+				connection.Close();
+				//MessageBox.Show("Tags: " + i + " " + j);
+				foreach(var tag in fileMetadata.tags) {
+					listBox_tags.Items.Add(tag.name);
+				}
 
 			}
 			else {
 				listBox_tags.Items.Add("Tag view N/A in batch edit");
 			}
+
 		}
 
+
+		private void comboBox_addTag_KeyDown(object sender, KeyEventArgs e) {
+			if(e.KeyCode == Keys.Enter) {
+				string tag = comboBox_addTag.Text;
+				string tagCategory = comboBox_tagCategory.Text;
+				if(comboBox_addTag.Text.Length > 0 && tagCategory.Length > 0) {
+					AddTagToSelectedFiles(tag, tagCategory);
+					loadComboBox();
+				}
+				else {
+					MessageBox.Show("invalid tag or tag category", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
+			}
+		}
+		public void AddTagToSelectedFiles(string tag, string tagCategory) {
+			//MessageBox.Show("1");
+			//check if tag already exists in database, if not add it. Then add it to all the selected files in the explorerBrowser1
+			var connection = Database.connection;
+			try {
+				connection.Open();
+			}
+			catch(Exception e) {
+				MessageBox.Show(e.ToString());
+				return;
+			}
+			//MessageBox.Show("1.2");
+			var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+			command.Parameters.AddWithValue("@name", tag);
+			var reader = command.ExecuteReader();
+			int tagID = -1;
+			//MessageBox.Show("2");
+			if(reader.Read()) {
+				tagID = (int)(long)reader["id"];
+			}
+			else {
+				command = new System.Data.SQLite.SQLiteCommand("INSERT INTO tag (name, type) VALUES (@name, @type)", connection);
+				command.Parameters.AddWithValue("@name", tag);
+				command.Parameters.AddWithValue("@type", tagCategory);
+				command.ExecuteNonQuery();
+				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+				command.Parameters.AddWithValue("@name", tag);
+				reader = command.ExecuteReader();
+				if(reader.Read()) {
+					tagID = (int)(long)reader["id"];
+				}
+			}
+			MessageBox.Show("3 tagid: " + tagID);
+
+			/*give tag to all selected files in explorerBrowser1, using the FileMetadata_has_tag table*/
+			foreach(ShellObject? item in explorerBrowser1.SelectedItems) {
+				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+				command.Parameters.AddWithValue("@path", item.ParsingName);
+				reader = command.ExecuteReader();
+				int fileID = -1;
+				if(!reader.Read()) {
+					//MessageBox.Show("3.1");
+					FileMetadata fileMetadata = new FileMetadata();
+					fileMetadata.path = item.ParsingName;
+					if(item.Properties.System.DateCreated.Value != null) {
+
+						fileMetadata.creationDate = (DateTime)item.Properties.System.DateCreated.Value;
+					}
+					else if(item.Properties.System.DateModified.Value != null) {
+						fileMetadata.creationDate = (DateTime)item.Properties.System.DateModified.Value;
+					}
+					else {
+						fileMetadata.creationDate = DateTime.UnixEpoch;
+					}
+					fileMetadata.dateIndexed = DateTime.Now;
+					fileMetadata.size = (long)item.Properties.System.Size.Value;
+
+					//MessageBox.Show("3.1.1");
+					command = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata (path, creationDate, dateIndexed, size, album_ID, category_ID) VALUES (@path, @creationDate, @dateIndexed, @size, @album_ID, @category_ID)", connection);
+					command.Parameters.AddWithValue("@path", fileMetadata.path);
+					command.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
+					command.Parameters.AddWithValue("@dateIndexed", fileMetadata.dateIndexed);
+					command.Parameters.AddWithValue("@size", fileMetadata.size);
+					command.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex);
+					command.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex);
+					//MessageBox.Show("3.1.2");
+					try {
+						command.ExecuteNonQuery();
+					}
+					catch(Exception e) {
+						MessageBox.Show(e.ToString());
+					}
+					//MessageBox.Show("3.1.3");
+					//get the ID of the newly added file
+					command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+					command.Parameters.AddWithValue("@path", item.ParsingName);
+					//MessageBox.Show("3.1.4");
+					reader = command.ExecuteReader();
+					if(reader.Read()) {
+						fileID = (int)(long)reader["id"];
+					}
+
+					//MessageBox.Show("3.1.5");
+				}
+
+				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
+				command.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+				command.Parameters.AddWithValue("@tag_ID", tagID);
+				reader = command.ExecuteReader();
+				if(!reader.Read()) {
+					//MessageBox.Show("3.2");
+					command = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
+					command.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+					command.Parameters.AddWithValue("@tag_ID", tagID);
+					command.ExecuteNonQuery();
+				}
+			}
+			//MessageBox.Show("4");
+			connection.Close();
+			//MessageBox.Show("Tag added to files", "Info");
+
+		}
+
+		private void comboBox_addTag_SelectedIndexChanged(object sender, EventArgs e) {
+			if(comboBox_addTag.SelectedItem != null) {
+				var itemName = ((ComboBoxItem)comboBox_addTag.SelectedItem).Text;
+				//find the tag in the database and set the category in the comboBox_tagCategory
+				var connection = Database.connection;
+				connection.Open();
+				var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+				command.Parameters.AddWithValue("@name", itemName);
+				var reader = command.ExecuteReader();
+				if(reader.Read()) {
+					comboBox_tagCategory.Text = (string)reader["type"];
+				}
+				connection.Close();
+			}
+		}
+
+		private void button_addtag_Click(object sender, EventArgs e) {
+			string tag = comboBox_addTag.Text;
+			string tagCategory = comboBox_tagCategory.Text;
+			if(comboBox_addTag.Text.Length > 0 && tagCategory.Length > 0) {
+				AddTagToSelectedFiles(tag, tagCategory);
+				loadComboBox();
+			}
+			else {
+				MessageBox.Show("invalid tag or tag category", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
 	}
 }

@@ -50,6 +50,8 @@ namespace TSTag3000 {
 			form.Controls.Clear();
 			form.Controls.Add(managePage);
 			form.Size = new Size(1120 + HORIZONTAL_BORDER, 680 + VERTICAL_BORDER);
+
+			form.MinimumSize = new Size(640, 480);
 		}
 
 		//Windows border size

@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace TSTag3000.db {
 	public class Tag {
-		int ID;
-		string name;
-		string type;
+		public int ID;
+		public string name;
+		public string type;
 	}
 }

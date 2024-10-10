@@ -28,22 +28,29 @@ namespace TSTag3000 {
 			components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManagePage));
 			panel_left = new Panel();
+			button2 = new Button();
+			listBox_categories = new ListBox();
+			button_addCategory = new Button();
 			button1 = new Button();
 			listBox_albums = new ListBox();
 			button_addAlbum = new Button();
 			toolStrip1 = new ToolStrip();
-			toolStripButton_ffmpegTag = new ToolStripButton();
-			toolStripButton_addToAlbum = new ToolStripButton();
-			toolStripButton_generateThumbnail = new ToolStripButton();
-			toolStripButton_batchGenerateThumbnail = new ToolStripButton();
+			toolStripButton_ffmpegTag = new ToolStripButtonNoAA();
+			toolStripButton_addToAlbum = new ToolStripButtonNoAA();
+			toolStripButton_generateThumbnail = new ToolStripButtonNoAA();
+			toolStripButton_batchGenerateThumbnail = new ToolStripButtonNoAA();
 			imageList1 = new ImageList(components);
 			listBox_tags = new ListBox();
 			toolTip1 = new ToolTip(components);
-			comboBox1 = new ComboBox();
+			comboBox_addTag = new ComboBoxColour();
 			textBox_explorerPath = new TextBox();
 			panel_info = new Panel();
 			label1 = new Label();
 			explorerBrowser1 = new Microsoft.WindowsAPICodePack.Controls.WindowsForms.ExplorerBrowser();
+			label2 = new Label();
+			label_albumname = new Label();
+			comboBox_tagCategory = new ComboBox();
+			button_addtag = new Button();
 			panel_left.SuspendLayout();
 			toolStrip1.SuspendLayout();
 			panel_info.SuspendLayout();
@@ -52,6 +59,9 @@ namespace TSTag3000 {
 			// panel_left
 			// 
 			panel_left.BackColor = SystemColors.Control;
+			panel_left.Controls.Add(button2);
+			panel_left.Controls.Add(listBox_categories);
+			panel_left.Controls.Add(button_addCategory);
 			panel_left.Controls.Add(button1);
 			panel_left.Controls.Add(listBox_albums);
 			panel_left.Controls.Add(button_addAlbum);
@@ -60,13 +70,43 @@ namespace TSTag3000 {
 			panel_left.Size = new Size(192, 592);
 			panel_left.TabIndex = 0;
 			// 
+			// button2
+			// 
+			button2.BackColor = Color.Transparent;
+			button2.FlatAppearance.BorderSize = 0;
+			button2.FlatStyle = FlatStyle.Flat;
+			button2.Image = (Image)resources.GetObject("button2.Image");
+			button2.Location = new Point(144, 552);
+			button2.Name = "button2";
+			button2.Size = new Size(24, 24);
+			button2.TabIndex = 6;
+			button2.UseVisualStyleBackColor = false;
+			// 
+			// listBox_categories
+			// 
+			listBox_categories.FormattingEnabled = true;
+			listBox_categories.ItemHeight = 15;
+			listBox_categories.Location = new Point(8, 296);
+			listBox_categories.Name = "listBox_categories";
+			listBox_categories.Size = new Size(176, 244);
+			listBox_categories.TabIndex = 5;
+			// 
+			// button_addCategory
+			// 
+			button_addCategory.Location = new Point(8, 552);
+			button_addCategory.Name = "button_addCategory";
+			button_addCategory.Size = new Size(112, 23);
+			button_addCategory.TabIndex = 4;
+			button_addCategory.Text = "Add new category";
+			button_addCategory.UseVisualStyleBackColor = true;
+			// 
 			// button1
 			// 
 			button1.BackColor = Color.Transparent;
 			button1.FlatAppearance.BorderSize = 0;
 			button1.FlatStyle = FlatStyle.Flat;
 			button1.Image = (Image)resources.GetObject("button1.Image");
-			button1.Location = new Point(120, 558);
+			button1.Location = new Point(144, 264);
 			button1.Name = "button1";
 			button1.Size = new Size(24, 24);
 			button1.TabIndex = 3;
@@ -79,14 +119,14 @@ namespace TSTag3000 {
 			listBox_albums.ItemHeight = 15;
 			listBox_albums.Location = new Point(8, 8);
 			listBox_albums.Name = "listBox_albums";
-			listBox_albums.Size = new Size(176, 544);
+			listBox_albums.Size = new Size(176, 244);
 			listBox_albums.TabIndex = 2;
 			// 
 			// button_addAlbum
 			// 
-			button_addAlbum.Location = new Point(8, 560);
+			button_addAlbum.Location = new Point(8, 264);
 			button_addAlbum.Name = "button_addAlbum";
-			button_addAlbum.Size = new Size(104, 23);
+			button_addAlbum.Size = new Size(112, 23);
 			button_addAlbum.TabIndex = 1;
 			button_addAlbum.Text = "Add new album";
 			button_addAlbum.UseVisualStyleBackColor = true;
@@ -108,59 +148,67 @@ namespace TSTag3000 {
 			// toolStripButton_ffmpegTag
 			// 
 			toolStripButton_ffmpegTag.AutoSize = false;
-			toolStripButton_ffmpegTag.ForeColor = SystemColors.ControlLightLight;
+			toolStripButton_ffmpegTag.ForeColor = Color.White;
 			toolStripButton_ffmpegTag.Image = Properties.Resources.ffmpeg;
 			toolStripButton_ffmpegTag.ImageTransparentColor = Color.Magenta;
 			toolStripButton_ffmpegTag.Margin = new Padding(20, 1, 0, 2);
 			toolStripButton_ffmpegTag.Name = "toolStripButton_ffmpegTag";
 			toolStripButton_ffmpegTag.Size = new Size(64, 85);
-			toolStripButton_ffmpegTag.Text = "FFTag";
+			toolStripButton_ffmpegTag.Text = " ";
 			toolStripButton_ffmpegTag.TextAlign = ContentAlignment.BottomCenter;
 			toolStripButton_ffmpegTag.TextImageRelation = TextImageRelation.ImageAboveText;
+			toolStripButton_ffmpegTag.TextNoAA = "FFTag";
 			toolStripButton_ffmpegTag.ToolTipText = "Automatically tag videos and gifs as animated, and videos with sound with sound tag";
+			toolStripButton_ffmpegTag.YOffset = 65;
 			toolStripButton_ffmpegTag.Click += toolStripButton_ffmpegTag_Click;
 			// 
 			// toolStripButton_addToAlbum
 			// 
 			toolStripButton_addToAlbum.AutoSize = false;
-			toolStripButton_addToAlbum.ForeColor = SystemColors.ControlLightLight;
+			toolStripButton_addToAlbum.ForeColor = Color.White;
 			toolStripButton_addToAlbum.Image = Properties.Resources.addToAlbum;
 			toolStripButton_addToAlbum.ImageTransparentColor = Color.Magenta;
 			toolStripButton_addToAlbum.Name = "toolStripButton_addToAlbum";
 			toolStripButton_addToAlbum.Size = new Size(86, 85);
-			toolStripButton_addToAlbum.Text = "Add to Album";
+			toolStripButton_addToAlbum.Text = " ";
 			toolStripButton_addToAlbum.TextAlign = ContentAlignment.BottomCenter;
 			toolStripButton_addToAlbum.TextImageRelation = TextImageRelation.ImageAboveText;
+			toolStripButton_addToAlbum.TextNoAA = "Add to Album";
 			toolStripButton_addToAlbum.ToolTipText = "Automatically tag videos and gifs as animated, and videos with sound with sound tag";
+			toolStripButton_addToAlbum.YOffset = 65;
 			toolStripButton_addToAlbum.Click += toolStripButton_addToAlbum_Click;
 			// 
 			// toolStripButton_generateThumbnail
 			// 
 			toolStripButton_generateThumbnail.AutoSize = false;
-			toolStripButton_generateThumbnail.ForeColor = SystemColors.ControlLightLight;
+			toolStripButton_generateThumbnail.ForeColor = Color.White;
 			toolStripButton_generateThumbnail.Image = Properties.Resources.generate_thumbnail2;
 			toolStripButton_generateThumbnail.ImageTransparentColor = Color.Magenta;
 			toolStripButton_generateThumbnail.Name = "toolStripButton_generateThumbnail";
 			toolStripButton_generateThumbnail.Size = new Size(76, 85);
-			toolStripButton_generateThumbnail.Text = "Gen thumbs";
+			toolStripButton_generateThumbnail.Text = " ";
 			toolStripButton_generateThumbnail.TextAlign = ContentAlignment.BottomCenter;
 			toolStripButton_generateThumbnail.TextImageRelation = TextImageRelation.ImageAboveText;
+			toolStripButton_generateThumbnail.TextNoAA = "Gen thumb";
 			toolStripButton_generateThumbnail.ToolTipText = "Generate thumbnails for the selected pictures";
+			toolStripButton_generateThumbnail.YOffset = 65;
 			toolStripButton_generateThumbnail.Click += toolStripButton_generateThumbnail_Click;
 			// 
 			// toolStripButton_batchGenerateThumbnail
 			// 
 			toolStripButton_batchGenerateThumbnail.AutoSize = false;
 			toolStripButton_batchGenerateThumbnail.BackColor = Color.Transparent;
-			toolStripButton_batchGenerateThumbnail.ForeColor = SystemColors.ControlLightLight;
+			toolStripButton_batchGenerateThumbnail.ForeColor = Color.White;
 			toolStripButton_batchGenerateThumbnail.Image = Properties.Resources.batch_generate_thumbnails;
 			toolStripButton_batchGenerateThumbnail.ImageTransparentColor = Color.Magenta;
 			toolStripButton_batchGenerateThumbnail.Name = "toolStripButton_batchGenerateThumbnail";
 			toolStripButton_batchGenerateThumbnail.Size = new Size(85, 85);
-			toolStripButton_batchGenerateThumbnail.Text = "Batch thumbs";
+			toolStripButton_batchGenerateThumbnail.Text = " ";
 			toolStripButton_batchGenerateThumbnail.TextAlign = ContentAlignment.BottomCenter;
 			toolStripButton_batchGenerateThumbnail.TextImageRelation = TextImageRelation.ImageAboveText;
+			toolStripButton_batchGenerateThumbnail.TextNoAA = "Batch thumb";
 			toolStripButton_batchGenerateThumbnail.ToolTipText = "Batch generate thumbnails for all images that are already tagged";
+			toolStripButton_batchGenerateThumbnail.YOffset = 65;
 			toolStripButton_batchGenerateThumbnail.Click += toolStripButton_batchGenerateThumbnail_Click;
 			// 
 			// imageList1
@@ -173,18 +221,23 @@ namespace TSTag3000 {
 			// 
 			listBox_tags.FormattingEnabled = true;
 			listBox_tags.ItemHeight = 15;
-			listBox_tags.Location = new Point(936, 158);
+			listBox_tags.Location = new Point(936, 216);
 			listBox_tags.Name = "listBox_tags";
-			listBox_tags.Size = new Size(176, 514);
+			listBox_tags.Size = new Size(176, 454);
 			listBox_tags.TabIndex = 3;
 			// 
-			// comboBox1
+			// comboBox_addTag
 			// 
-			comboBox1.FormattingEnabled = true;
-			comboBox1.Location = new Point(936, 128);
-			comboBox1.Name = "comboBox1";
-			comboBox1.Size = new Size(144, 23);
-			comboBox1.TabIndex = 4;
+			comboBox_addTag.AutoCompleteMode = AutoCompleteMode.Suggest;
+			comboBox_addTag.AutoCompleteSource = AutoCompleteSource.ListItems;
+			comboBox_addTag.DrawMode = DrawMode.OwnerDrawFixed;
+			comboBox_addTag.FormattingEnabled = true;
+			comboBox_addTag.Location = new Point(936, 152);
+			comboBox_addTag.Name = "comboBox_addTag";
+			comboBox_addTag.Size = new Size(176, 24);
+			comboBox_addTag.TabIndex = 4;
+			comboBox_addTag.SelectedIndexChanged += comboBox_addTag_SelectedIndexChanged;
+			comboBox_addTag.KeyDown += comboBox_addTag_KeyDown;
 			// 
 			// textBox_explorerPath
 			// 
@@ -222,15 +275,57 @@ namespace TSTag3000 {
 			explorerBrowser1.SelectionChanged += explorerBrowser1_SelectionChanged;
 			explorerBrowser1.Load += explorerBrowser1_Load;
 			// 
+			// label2
+			// 
+			label2.AutoSize = true;
+			label2.Location = new Point(712, 104);
+			label2.Name = "label2";
+			label2.Size = new Size(38, 15);
+			label2.TabIndex = 8;
+			label2.Text = "label2";
+			// 
+			// label_albumname
+			// 
+			label_albumname.AutoSize = true;
+			label_albumname.Location = new Point(936, 128);
+			label_albumname.Name = "label_albumname";
+			label_albumname.Size = new Size(49, 15);
+			label_albumname.TabIndex = 9;
+			label_albumname.Text = "Album: ";
+			// 
+			// comboBox_tagCategory
+			// 
+			comboBox_tagCategory.AutoCompleteMode = AutoCompleteMode.Suggest;
+			comboBox_tagCategory.FormattingEnabled = true;
+			comboBox_tagCategory.Items.AddRange(new object[] { "artist", "copyright", "character", "general", "meta" });
+			comboBox_tagCategory.Location = new Point(936, 184);
+			comboBox_tagCategory.Name = "comboBox_tagCategory";
+			comboBox_tagCategory.Size = new Size(121, 23);
+			comboBox_tagCategory.TabIndex = 10;
+			// 
+			// button_addtag
+			// 
+			button_addtag.Location = new Point(1064, 184);
+			button_addtag.Name = "button_addtag";
+			button_addtag.Size = new Size(48, 23);
+			button_addtag.TabIndex = 11;
+			button_addtag.Text = "Add";
+			button_addtag.UseVisualStyleBackColor = true;
+			button_addtag.Click += button_addtag_Click;
+			// 
 			// ManagePage
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
 			BackColor = SystemColors.Control;
+			Controls.Add(button_addtag);
+			Controls.Add(comboBox_tagCategory);
+			Controls.Add(label_albumname);
+			Controls.Add(label2);
 			Controls.Add(explorerBrowser1);
 			Controls.Add(panel_info);
 			Controls.Add(textBox_explorerPath);
-			Controls.Add(comboBox1);
+			Controls.Add(comboBox_addTag);
 			Controls.Add(listBox_tags);
 			Controls.Add(toolStrip1);
 			Controls.Add(panel_left);
@@ -252,11 +347,11 @@ namespace TSTag3000 {
 		private ToolStrip toolStrip1;
 		private ImageList imageList1;
 		private Button button_addAlbum;
-		private ToolStripButton toolStripButton_addToAlbum;
+		private ToolStripButtonNoAA toolStripButton_addToAlbum;
 		private ListBox listBox_tags;
 		private ToolTip toolTip1;
-		private ComboBox comboBox1;
-		private ToolStripButton toolStripButton_ffmpegTag;
+		private ComboBoxColour comboBox_addTag;
+		private ToolStripButtonNoAA toolStripButton_ffmpegTag;
 		private TextBox textBox_explorerPath;
 		private AnimationBox pictureBox1;
 		private Panel panel_info;
@@ -264,8 +359,15 @@ namespace TSTag3000 {
 		private ListBox listBox_albums;
 		private Microsoft.WindowsAPICodePack.Controls.WindowsForms.ExplorerBrowser explorerBrowser1;
 		private Button button1;
-		private ToolStripButton toolStripButton_generateThumbnail;
-		private ToolStripButton toolStripButton_batchGenerateThumbnail;
+		private ToolStripButtonNoAA toolStripButton_generateThumbnail;
+		private ToolStripButtonNoAA toolStripButton_batchGenerateThumbnail;
 		private Label label1;
+		private Label label2;
+		private Label label_albumname;
+		private ComboBox comboBox_tagCategory;
+		private Button button_addtag;
+		private Button button2;
+		private ListBox listBox_categories;
+		private Button button_addCategory;
 	}
 }
