@@ -221,9 +221,9 @@ namespace TSTag3000 {
 			// 
 			listBox_tags.FormattingEnabled = true;
 			listBox_tags.ItemHeight = 15;
-			listBox_tags.Location = new Point(936, 216);
+			listBox_tags.Location = new Point(936, 223);
 			listBox_tags.Name = "listBox_tags";
-			listBox_tags.Size = new Size(176, 454);
+			listBox_tags.Size = new Size(176, 439);
 			listBox_tags.TabIndex = 3;
 			// 
 			// comboBox_addTag
@@ -232,7 +232,7 @@ namespace TSTag3000 {
 			comboBox_addTag.AutoCompleteSource = AutoCompleteSource.ListItems;
 			comboBox_addTag.DrawMode = DrawMode.OwnerDrawFixed;
 			comboBox_addTag.FormattingEnabled = true;
-			comboBox_addTag.Location = new Point(936, 152);
+			comboBox_addTag.Location = new Point(936, 160);
 			comboBox_addTag.Name = "comboBox_addTag";
 			comboBox_addTag.Size = new Size(176, 24);
 			comboBox_addTag.TabIndex = 4;
@@ -245,6 +245,7 @@ namespace TSTag3000 {
 			textBox_explorerPath.Name = "textBox_explorerPath";
 			textBox_explorerPath.Size = new Size(456, 23);
 			textBox_explorerPath.TabIndex = 5;
+			textBox_explorerPath.TextChanged += textBox_explorerPath_TextChanged;
 			// 
 			// panel_info
 			// 
@@ -273,6 +274,7 @@ namespace TSTag3000 {
 			explorerBrowser1.Size = new Size(728, 544);
 			explorerBrowser1.TabIndex = 7;
 			explorerBrowser1.SelectionChanged += explorerBrowser1_SelectionChanged;
+			explorerBrowser1.NavigationComplete += explorerBrowser1_NavigationComplete;
 			explorerBrowser1.Load += explorerBrowser1_Load;
 			// 
 			// label2
@@ -289,23 +291,23 @@ namespace TSTag3000 {
 			label_albumname.AutoSize = true;
 			label_albumname.Location = new Point(936, 128);
 			label_albumname.Name = "label_albumname";
-			label_albumname.Size = new Size(49, 15);
+			label_albumname.Size = new Size(58, 30);
 			label_albumname.TabIndex = 9;
-			label_albumname.Text = "Album: ";
+			label_albumname.Text = "Album: \r\nCategory:\r\n";
 			// 
 			// comboBox_tagCategory
 			// 
 			comboBox_tagCategory.AutoCompleteMode = AutoCompleteMode.Suggest;
 			comboBox_tagCategory.FormattingEnabled = true;
 			comboBox_tagCategory.Items.AddRange(new object[] { "artist", "copyright", "character", "general", "meta" });
-			comboBox_tagCategory.Location = new Point(936, 184);
+			comboBox_tagCategory.Location = new Point(936, 192);
 			comboBox_tagCategory.Name = "comboBox_tagCategory";
 			comboBox_tagCategory.Size = new Size(121, 23);
 			comboBox_tagCategory.TabIndex = 10;
 			// 
 			// button_addtag
 			// 
-			button_addtag.Location = new Point(1064, 184);
+			button_addtag.Location = new Point(1064, 192);
 			button_addtag.Name = "button_addtag";
 			button_addtag.Size = new Size(48, 23);
 			button_addtag.TabIndex = 11;

@@ -13,7 +13,8 @@ using TSTag3000.db;
 using TSTag3000.UI;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
-namespace TSTag3000 {
+namespace TSTag3000
+{
 	public partial class ManagePage : UserControl {
 		public ManagePage() {
 			InitializeComponent();
@@ -39,7 +40,7 @@ namespace TSTag3000 {
 			explorerBrowser1.Width = this.Width - 392;
 			explorerBrowser1.Height = this.Height - toolStrip1.Height - 48;
 			listBox_tags.Left = this.Width - 184;
-			listBox_tags.Height = this.Height - toolStrip1.Height - 138;
+			listBox_tags.Height = this.Height - toolStrip1.Height - 138 - 4;
 			comboBox_addTag.Left = this.Width - 184;
 			comboBox_tagCategory.Left = this.Width - 184;
 			button_addtag.Left = this.Width - 184 + comboBox_tagCategory.Width + 5;
@@ -258,25 +259,26 @@ namespace TSTag3000 {
 		private void explorerBrowser1_SelectionChanged(object sender, EventArgs e) {
 			var selectedItems = explorerBrowser1.SelectedItems;
 			listBox_tags.Items.Clear();
+			label_albumname.Text = "Album: N/A\nCategory: N/A";
 			if(selectedItems.Count() == 0) {
+				listBox_tags.Items.Add("No files selected");
 				return;
 			}
 			else if(selectedItems.Count() == 1) {
-
 				var selectedItem = selectedItems[0];
 				//check in database if there is entry in FileMetadata table, if there is put it in FileMetadata object, else create new object
 				var connection = Database.connection;
 				connection.Open();
 				var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
 				command.Parameters.AddWithValue("@path", selectedItem.ParsingName);
-				var reader = command.ExecuteReader();
+				var reader_file = command.ExecuteReader();
 				FileMetadata fileMetadata = new FileMetadata();
 				int i = 0;
 				int j = 0;
-				if(reader.Read()) {
+				if(reader_file.Read()) {
 					try {
-						fileMetadata.ID = (int)(long)reader["id"];
-						fileMetadata.path = (string)reader["path"];
+						fileMetadata.ID = (int)(long)reader_file["id"];
+						fileMetadata.path = (string)reader_file["path"];
 						//load thumbnail from blob (jpeg)
 						//byte[] thumbnail = (byte[])reader["thumbnail"];
 						//System.IO.MemoryStream stream = new System.IO.MemoryStream(thumbnail);
@@ -285,11 +287,11 @@ namespace TSTag3000 {
 						//load tags from database, from table "tag" and connecting table "FileMetadata_has_tag"
 						command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID", connection);
 						command.Parameters.AddWithValue("@FileMetadata_ID", fileMetadata.ID);
-						reader = command.ExecuteReader();
-						while(reader.Read()) {
+						var reader_tags = command.ExecuteReader();
+						while(reader_tags.Read()) {
 							i++;
 							command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE id = @id", connection);
-							command.Parameters.AddWithValue("@id", (int)(long)reader["tag_ID"]);
+							command.Parameters.AddWithValue("@id", (int)(long)reader_tags["tag_ID"]);
 							var reader2 = command.ExecuteReader();
 							if(reader2.Read()) {
 								j++;
@@ -300,6 +302,26 @@ namespace TSTag3000 {
 								fileMetadata.tags.Add(tag);
 							}
 						}
+						//set the album and category
+						command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM album WHERE id = @id", connection);
+						command.Parameters.AddWithValue("@id", (int)(long)reader_file["album_ID"]);
+						var reader_albums = command.ExecuteReader();
+						if(reader_albums.Read()) {
+							Album album = new();
+							album.ID = (int)(long)reader_albums["id"];
+							album.name = (string)reader_albums["name"];
+							fileMetadata.album = album;
+						}
+						command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM category WHERE id = @id", connection);
+						command.Parameters.AddWithValue("@id", (int)(long)reader_file["category_ID"]);
+						reader_albums = command.ExecuteReader();
+						if(reader_albums.Read()) {
+							Category category = new();
+							category.ID = (int)(long)reader_albums["id"];
+							category.name = (string)reader_albums["name"];
+							fileMetadata.category = category;
+						}
+						label_albumname.Text = "Album: " + fileMetadata.album.name + "\nCategory: " + fileMetadata.category.name;
 					}
 					catch(Exception ex) {
 						MessageBox.Show(ex.ToString());
@@ -317,6 +339,7 @@ namespace TSTag3000 {
 			}
 			else {
 				listBox_tags.Items.Add("Tag view N/A in batch edit");
+				label_albumname.Text = "Album: N/A\nCategory: N/A";
 			}
 
 		}
@@ -398,8 +421,8 @@ namespace TSTag3000 {
 					command.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
 					command.Parameters.AddWithValue("@dateIndexed", fileMetadata.dateIndexed);
 					command.Parameters.AddWithValue("@size", fileMetadata.size);
-					command.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex);
-					command.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex);
+					command.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex + 1);
+					command.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex + 1);
 					//MessageBox.Show("3.1.2");
 					try {
 						command.ExecuteNonQuery();
@@ -463,6 +486,17 @@ namespace TSTag3000 {
 			}
 			else {
 				MessageBox.Show("invalid tag or tag category", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		private void explorerBrowser1_NavigationComplete(object sender, Microsoft.WindowsAPICodePack.Controls.NavigationCompleteEventArgs e) {
+			textBox_explorerPath.Text = e.NewLocation.ParsingName;
+		}
+
+		private void textBox_explorerPath_TextChanged(object sender, EventArgs e) {
+			if(System.IO.Directory.Exists(textBox_explorerPath.Text)) {
+				ShellObject Shell = ShellObject.FromParsingName(textBox_explorerPath.Text);
+				explorerBrowser1.Navigate(Shell);
 			}
 		}
 	}

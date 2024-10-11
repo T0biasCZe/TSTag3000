@@ -1,8 +1,10 @@
+using TSTag3000.db;
 using TSTag3000.UI;
 using static TSTag3000.UI.AeroUtil;
 
-namespace TSTag3000 {
-	public partial class Form1 : Form {
+namespace TSTag3000
+{
+    public partial class Form1 : Form {
 		public static Form1 form;
 		public Form1() {
 			this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);

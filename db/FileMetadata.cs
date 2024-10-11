@@ -14,6 +14,7 @@ namespace TSTag3000.db {
         public Bitmap thumbnail;
         public Rating rating;
         public Album album;
+        public Category category;
         public List<Tag> tags;
 
 		public FileMetadata() {
