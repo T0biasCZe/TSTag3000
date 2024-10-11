@@ -144,16 +144,22 @@ namespace TSTag3000
 
 		private void explorerBrowser1_Load(object sender, EventArgs e) {
 			try {
-				string path = Environment.ExpandEnvironmentVariables("%UserProfile%\\pictures\\");
+				string path = "";
+				if(Settings.lastDirectory != null) {
+					path = Settings.lastDirectory;
+				}
+				else if(Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures))){
+					path = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+				}
+				else {
+					path = Environment.ExpandEnvironmentVariables("C:\\");
+				}
 				ShellObject Shell = ShellObject.FromParsingName(path);
 				explorerBrowser1.Navigate(Shell);
 				textBox_explorerPath.Text = path;
 			}
 			catch {
-				string path = Environment.ExpandEnvironmentVariables("C:\\");
-				ShellObject Shell = ShellObject.FromParsingName(path);
-				explorerBrowser1.Navigate(Shell);
-				textBox_explorerPath.Text = path;
+				MessageBox.Show("Error loading explorerBrowser1", "Error");
 			}
 		}
 
@@ -302,6 +308,7 @@ namespace TSTag3000
 								fileMetadata.tags.Add(tag);
 							}
 						}
+						label2.Text = "Tags: " + i + " " + j;
 						//set the album and category
 						command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM album WHERE id = @id", connection);
 						command.Parameters.AddWithValue("@id", (int)(long)reader_file["album_ID"]);
@@ -321,7 +328,15 @@ namespace TSTag3000
 							category.name = (string)reader_albums["name"];
 							fileMetadata.category = category;
 						}
-						label_albumname.Text = "Album: " + fileMetadata.album.name + "\nCategory: " + fileMetadata.category.name;
+						string albumName = "UNSET";
+						string categoryName = "UNSET";
+						if(fileMetadata.album != null) {
+							albumName = fileMetadata.album.name;
+						}
+						if(fileMetadata.category != null) {
+							categoryName = fileMetadata.category.name;
+						}
+						label_albumname.Text = $"Album: {albumName}\nCategory: {categoryName}\n FileID: {fileMetadata.ID}";
 					}
 					catch(Exception ex) {
 						MessageBox.Show(ex.ToString());
@@ -362,11 +377,17 @@ namespace TSTag3000
 			//MessageBox.Show("1");
 			//check if tag already exists in database, if not add it. Then add it to all the selected files in the explorerBrowser1
 			var connection = Database.connection;
-			try {
-				connection.Open();
+			if(connection.State != ConnectionState.Open) {
+				try {
+					connection.Open();
+				}
+				catch(Exception e) {
+					MessageBox.Show(e.ToString());
+					return;
+				}
 			}
-			catch(Exception e) {
-				MessageBox.Show(e.ToString());
+			else {
+				MessageBox.Show("Connection already open");
 				return;
 			}
 			//MessageBox.Show("1.2");
@@ -393,11 +414,11 @@ namespace TSTag3000
 			MessageBox.Show("3 tagid: " + tagID);
 
 			/*give tag to all selected files in explorerBrowser1, using the FileMetadata_has_tag table*/
+			int fileID = -1;
 			foreach(ShellObject? item in explorerBrowser1.SelectedItems) {
 				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
 				command.Parameters.AddWithValue("@path", item.ParsingName);
 				reader = command.ExecuteReader();
-				int fileID = -1;
 				if(!reader.Read()) {
 					//MessageBox.Show("3.1");
 					FileMetadata fileMetadata = new FileMetadata();
@@ -442,22 +463,33 @@ namespace TSTag3000
 
 					//MessageBox.Show("3.1.5");
 				}
+				else {
+					fileID = (int)(long)reader["id"];
+				}
 
 				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
 				command.Parameters.AddWithValue("@FileMetadata_ID", fileID);
 				command.Parameters.AddWithValue("@tag_ID", tagID);
 				reader = command.ExecuteReader();
 				if(!reader.Read()) {
-					//MessageBox.Show("3.2");
-					command = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
-					command.Parameters.AddWithValue("@FileMetadata_ID", fileID);
-					command.Parameters.AddWithValue("@tag_ID", tagID);
-					command.ExecuteNonQuery();
+					try {
+						//MessageBox.Show("3.2");
+						var command3 = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
+						command3.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+						command3.Parameters.AddWithValue("@tag_ID", tagID);
+						command3.ExecuteNonQuery();
+					} 
+					catch (Exception ex){
+						MessageBox.Show($"error adding tag {tagID} to file {fileID}:\n{ex.ToString()}");
+					}
+				}
+				else {
+					MessageBox.Show("Tag already exists in file", "Info");
 				}
 			}
 			//MessageBox.Show("4");
 			connection.Close();
-			//MessageBox.Show("Tag added to files", "Info");
+			MessageBox.Show($"Tag {tag} {tagID} added to file {fileID}", "Info");
 
 		}
 
@@ -491,6 +523,7 @@ namespace TSTag3000
 
 		private void explorerBrowser1_NavigationComplete(object sender, Microsoft.WindowsAPICodePack.Controls.NavigationCompleteEventArgs e) {
 			textBox_explorerPath.Text = e.NewLocation.ParsingName;
+			Settings.lastDirectory = e.NewLocation.ParsingName;
 		}
 
 		private void textBox_explorerPath_TextChanged(object sender, EventArgs e) {

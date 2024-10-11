@@ -7,6 +7,7 @@ namespace TSTag3000
     public partial class Form1 : Form {
 		public static Form1 form;
 		public Form1() {
+			Settings.LoadSettings();
 			this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 
 			InitializeComponent();
@@ -66,6 +67,7 @@ namespace TSTag3000
 			}
 		}
 		public static void OnProcessExit(object sender, EventArgs e) {
+			Settings.SaveSettings();
 			Database.SaveShutdown();
 		}
 

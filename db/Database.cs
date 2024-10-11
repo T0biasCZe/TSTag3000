@@ -94,5 +94,9 @@ namespace TSTag3000.db{
             command.ExecuteNonQuery();
             connection.Close();
         }
+
+        public static FileMetadata getFile(string path) {
+            return null;
+        }
     }
 }
