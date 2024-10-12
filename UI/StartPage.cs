@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using TSTag3000.db;
 
 namespace TSTag3000 {
 	public partial class StartPage : UserControl {
@@ -16,6 +17,14 @@ namespace TSTag3000 {
 		public static bool bitmapBeingWritten = false;
 		public StartPage() {
 			InitializeComponent();
+
+			try {
+				numDisplay1.numberToDisplay = Database.GetNumberOfFiles();
+			}
+			catch(Exception ex) {
+				MessageBox.Show(ex.ToString());
+			}
+
 			timer_bitmap_Tick(null, null);
 
 			this.DoubleBuffered = true;

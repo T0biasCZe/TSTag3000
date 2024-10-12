@@ -8,14 +8,6 @@ namespace TSTag3000
 		public static Form1 form;
 		public Form1() {
 			Settings.LoadSettings();
-			this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-
-			InitializeComponent();
-			form = this;
-			//dont allow resizing
-			this.FormBorderStyle = FormBorderStyle.FixedSingle;
-			this.MaximizeBox = false;
-
 			try {
 				Database.Init();
 			}
@@ -23,6 +15,15 @@ namespace TSTag3000
 				MessageBox.Show(e.ToString());
 			}
 
+
+
+			this.SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+
+			InitializeComponent();
+			form = this;
+			//dont allow resizing
+			this.FormBorderStyle = FormBorderStyle.FixedSingle;
+			this.MaximizeBox = false;
 			AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
 		}
 		public static int currentPage = 0;
@@ -46,13 +47,22 @@ namespace TSTag3000
 			}
 			/*remove all controls from the form and add MainPage*/
 
+			if(Settings.managePageMaximized) {
+				Form1.form.WindowState = FormWindowState.Maximized;
+			}
+			else if(Settings.managePageSize != null) {
+				Form1.form.Size = Settings.managePageSize;
+			}
+			else {
+				Form1.form.Size = new Size(1120 + HORIZONTAL_BORDER, 680 + VERTICAL_BORDER);
+			}
+
 			form.FormBorderStyle = FormBorderStyle.Sizable;
 			form.MaximizeBox = true;
 
 			currentPage = 1;
 			form.Controls.Clear();
 			form.Controls.Add(managePage);
-			form.Size = new Size(1120 + HORIZONTAL_BORDER, 680 + VERTICAL_BORDER);
 
 			form.MinimumSize = new Size(640, 480);
 		}

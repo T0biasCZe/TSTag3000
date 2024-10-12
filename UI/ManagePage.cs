@@ -10,12 +10,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using TSTag3000.db;
-using TSTag3000.UI;
+using TSTag3000.scripts;
+using TSTag3000.UI.controls;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace TSTag3000
 {
-	public partial class ManagePage : UserControl {
+    public partial class ManagePage : UserControl {
 		public ManagePage() {
 			InitializeComponent();
 			this.BackColor = Color.Transparent;
@@ -49,6 +50,10 @@ namespace TSTag3000
 			textBox_explorerPath.Width = this.Width - 392 - 64;
 
 			toolStrip1.Width = this.Width + 10;
+
+			Settings.managePageSize = Form1.form.Size;
+
+			Settings.managePageMaximized = Form1.form.WindowState == FormWindowState.Maximized;
 
 
 			try {
@@ -176,22 +181,15 @@ namespace TSTag3000
 			while(reader.Read()) {
 				i++;
 				label1.Text = $"Creating thumbnail {i}...";
-				Bitmap bitmap = new Bitmap(reader["path"].ToString());
-				Size inputBitmapSize = bitmap.Size;
-
-				if(inputBitmapSize.Width > inputBitmapSize.Height) {
-					bitmap = new Bitmap(bitmap, 160, 160 * inputBitmapSize.Height / inputBitmapSize.Width);
-				}
-				else {
-					bitmap = new Bitmap(bitmap, 160 * inputBitmapSize.Width / inputBitmapSize.Height, 160);
-				}
+				string filePath = reader["path"].ToString();
+				Bitmap thumb = ffmpeg.GetThumbnail(filePath);
 
 				//compress the image to jpeg with quality 50, and save it to the database as BLOB into the "thumbnail" column
 				System.IO.MemoryStream stream = new System.IO.MemoryStream();
 				var encoder = ImageCodecInfo.GetImageEncoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
 				var encParams = new EncoderParameters() { Param = new[] { new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 20L) } };
-				bitmap.Save(stream, encoder, encParams);
-				bitmap.Save(Database.AppDataPath + "\\thumbnails\\" + reader["path"].ToString().GetHashCode().ToString() + ".jpg", encoder, encParams);
+				thumb.Save(stream, encoder, encParams);
+				thumb.Save(Database.AppDataPath + "\\thumbnails\\" + reader["path"].ToString().GetHashCode().ToString() + ".jpg", encoder, encParams);
 				command = new System.Data.SQLite.SQLiteCommand("UPDATE FileMetadata SET thumbnail = @thumbnail WHERE path = @path", connection);
 				command.Parameters.AddWithValue("@thumbnail", stream.ToArray());
 				command.Parameters.AddWithValue("@path", reader["path"].ToString());
@@ -221,23 +219,17 @@ namespace TSTag3000
 				if(reader.Read()) {
 					int fileInItems = listBox_tags.Items.IndexOf(item.ParsingName);
 					label1.Text = $"Creating thumbnail {fileInItems + 1}/{listBox_tags.Items.Count}...";
-					//file is in the database
-					Bitmap bitmap = new Bitmap(item.ParsingName);
-					Size inputBitmapSize = bitmap.Size;
 
-					if(inputBitmapSize.Width > inputBitmapSize.Height) {
-						bitmap = new Bitmap(bitmap, 160, 160 * inputBitmapSize.Height / inputBitmapSize.Width);
-					}
-					else {
-						bitmap = new Bitmap(bitmap, 160 * inputBitmapSize.Width / inputBitmapSize.Height, 160);
-					}
+					string filePath = item.ParsingName;
+					Bitmap thumb = ffmpeg.GetThumbnail(filePath);
+
 
 					//compress the image to jpeg with quality 50, and save it to the database as BLOB into the "thumbnail" column
 					System.IO.MemoryStream stream = new System.IO.MemoryStream();
 					var encoder = ImageCodecInfo.GetImageEncoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
 					var encParams = new EncoderParameters() { Param = new[] { new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 20L) } };
-					bitmap.Save(stream, encoder, encParams);
-					bitmap.Save(Database.AppDataPath + "\\thumbnails\\" + item.ParsingName.GetHashCode().ToString() + ".jpg", encoder, encParams);
+					thumb.Save(stream, encoder, encParams);
+					thumb.Save(Database.AppDataPath + "\\thumbnails\\" + item.ParsingName.GetHashCode().ToString() + ".jpg", encoder, encParams);
 					command = new System.Data.SQLite.SQLiteCommand("UPDATE FileMetadata SET thumbnail = @thumbnail WHERE path = @path", connection);
 					command.Parameters.AddWithValue("@thumbnail", stream.ToArray());
 					command.Parameters.AddWithValue("@path", item.ParsingName);
@@ -247,7 +239,7 @@ namespace TSTag3000
 				else {
 					//file is not in the database
 					label1.Text = "Skipping file " + item.Name;
-					Thread.Sleep(200);
+					Thread.Sleep(400);
 				}
 			}
 			connection.Close();
@@ -259,7 +251,23 @@ namespace TSTag3000
 		}
 
 		private void toolStripButton_ffmpegTag_Click(object sender, EventArgs e) {
+			//for every file in the database in the table "FileMetadata" generate tags using ffmpeg
+			var connection = Database.connection;
+			connection.Open();
+			var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata", connection);
+			var reader = command.ExecuteReader();
+			panel_info.Visible = true;
+			int i = 0;
+			while(reader.Read()) {
+				i++;
+				label1.Text = $"Creating tags {i}...";
+				string filePath = reader["path"].ToString();
+				bool hasAudio = ffmpeg.CheckSound(filePath);
+				bool isAnimated = ffmpeg.CheckAnimated(filePath);
 
+
+
+			}
 		}
 
 		private void explorerBrowser1_SelectionChanged(object sender, EventArgs e) {
@@ -411,6 +419,11 @@ namespace TSTag3000
 					tagID = (int)(long)reader["id"];
 				}
 			}
+			if(tagID == -1) {
+				System.Media.SystemSounds.Exclamation.Play();
+				MessageBox.Show("Error adding tag to Database", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
 			MessageBox.Show("3 tagid: " + tagID);
 
 			/*give tag to all selected files in explorerBrowser1, using the FileMetadata_has_tag table*/
@@ -465,6 +478,12 @@ namespace TSTag3000
 				}
 				else {
 					fileID = (int)(long)reader["id"];
+				}
+
+				if(fileID == -1) {
+					System.Media.SystemSounds.Exclamation.Play();
+					MessageBox.Show("Error adding file to Database\n" + item.ParsingName, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					return;
 				}
 
 				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);

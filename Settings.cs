@@ -9,9 +9,19 @@ namespace TSTag3000 {
 	public class Settings {
 		public static Settings s;
 		public string _lastDirectory { get; set; }
+		public Size _managePageSize { get; set; }
+		public bool _managePageMaximized { get; set; }
 		public static string lastDirectory {
 			get { return s._lastDirectory; }
 			set { s._lastDirectory = value; }
+		}
+		public static Size managePageSize {
+			get { return s._managePageSize; }
+			set { s._managePageSize = value; }
+		}
+		public static bool managePageMaximized {
+			get { return s._managePageMaximized; }
+			set { s._managePageMaximized = value; }
 		}
 		public static void LoadSettings() {
 			string path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\TSTag3000\\settings.xml";

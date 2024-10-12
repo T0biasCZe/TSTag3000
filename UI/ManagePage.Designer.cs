@@ -1,7 +1,8 @@
-﻿using TSTag3000.UI;
+﻿using TSTag3000.UI.controls;
 
-namespace TSTag3000 {
-	partial class ManagePage {
+namespace TSTag3000
+{
+    partial class ManagePage {
 		/// <summary> 
 		/// Required designer variable.
 		/// </summary>
@@ -158,7 +159,7 @@ namespace TSTag3000 {
 			toolStripButton_ffmpegTag.TextAlign = ContentAlignment.BottomCenter;
 			toolStripButton_ffmpegTag.TextImageRelation = TextImageRelation.ImageAboveText;
 			toolStripButton_ffmpegTag.TextNoAA = "FFTag";
-			toolStripButton_ffmpegTag.ToolTipText = "Automatically tag videos and gifs as animated, and videos with sound with sound tag";
+			toolStripButton_ffmpegTag.ToolTipText = "Automatically tag videos and gifs that as animated, and videos with sound with sound tag. Only processes files that already have some tag\r\n";
 			toolStripButton_ffmpegTag.YOffset = 65;
 			toolStripButton_ffmpegTag.Click += toolStripButton_ffmpegTag_Click;
 			// 
