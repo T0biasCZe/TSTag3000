@@ -13,6 +13,7 @@ using TSTag3000.db;
 using TSTag3000.scripts;
 using TSTag3000.UI.controls;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using Timer = System.Windows.Forms.Timer;
 
 namespace TSTag3000
 {
@@ -21,6 +22,7 @@ namespace TSTag3000
 			InitializeComponent();
 			this.BackColor = Color.Transparent;
 			this.DoubleBuffered = false;
+
 		}
 
 		private void ManagePage_Resize(object sender, EventArgs e) {
@@ -252,22 +254,32 @@ namespace TSTag3000
 
 		private void toolStripButton_ffmpegTag_Click(object sender, EventArgs e) {
 			//for every file in the database in the table "FileMetadata" generate tags using ffmpeg
+
+			int numberOfFiles = Database.GetNumberOfFiles();
 			var connection = Database.connection;
 			connection.Open();
+			
 			var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata", connection);
 			var reader = command.ExecuteReader();
 			panel_info.Visible = true;
 			int i = 0;
 			while(reader.Read()) {
 				i++;
-				label1.Text = $"Creating tags {i}...";
+				label1.Text = $"FFTagging {i}/{numberOfFiles}...";
 				string filePath = reader["path"].ToString();
 				bool hasAudio = ffmpeg.CheckSound(filePath);
 				bool isAnimated = ffmpeg.CheckAnimated(filePath);
 
-
-
+				//add tag "animated" if the file is animated, and "sound" if the file has audio
+				if(isAnimated) {
+					Database.AddTagToFile(filePath, "animated", "meta", (int)(long)reader["id"]);
+				}
+				if(hasAudio) {
+					Database.AddTagToFile(filePath, "sound", "meta", (int)(long)reader["id"]);
+				}
 			}
+			connection.Close();
+			panel_info.Visible = false;
 		}
 
 		private void explorerBrowser1_SelectionChanged(object sender, EventArgs e) {

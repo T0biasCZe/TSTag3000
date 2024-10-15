@@ -88,18 +88,54 @@ namespace TSTag3000.db{
             connection.Close();
             return tags;
         }
-        public static void AddTag(Tag tag) {
-            connection.Open();
+        public static int AddTag(Tag tag) {
             SQLiteCommand command = new SQLiteCommand("INSERT INTO tag (name, type) VALUES ('" + tag.name + "', '" + tag.type + "')", connection);
             command.ExecuteNonQuery();
-            connection.Close();
-        }
+            int id = (int)connection.LastInsertRowId;
+			//return the id of the tag
+			return id;
+		}
 
-        public static FileMetadata getFile(string path) {
+		public static FileMetadata getFile(string path) {
             return null;
         }
+        public static bool AddTagToFile(string filePath, string tagName, string tagCategory, int? fileID_=null) {
+			SQLiteCommand command;
+			SQLiteDataReader reader;
+			int fileID = -1;
+			int tagID = -1;
+            if(fileID_ != null) {
+                fileID = (int)fileID_;
+            }
+            else {
+                command = new SQLiteCommand("SELECT id FROM FileMetadata WHERE path = '" + filePath + "'", connection);
+                reader = command.ExecuteReader();
+                if(reader.Read()) {
+                    fileID = (int)(long)reader["id"];
+                }
+                else {
+                    return false;
+                }
+            }
+			command = new SQLiteCommand("SELECT id FROM tag WHERE name = '" + tagName + "'", connection);
+			reader = command.ExecuteReader();
+			if(reader.Read()) {
+				tagID = (int)(long)reader["id"];
+			}
+			else {
+                tagID = AddTag(new Tag() { name = tagName, type = tagCategory });
+			}
+            if(tagID == -1 || fileID == -1) {
+				return false;
+			}
 
-        public static int GetNumberOfFiles() {
+			//insert row into FileMetadata_has_tag
+			command = new SQLiteCommand("INSERT OR IGNORE INTO FileMetadata_has_tag (FileMetadata_id, tag_id) VALUES (" + fileID + ", " + tagID + ")", connection);
+			command.ExecuteNonQuery();
+			return true;
+		}
+
+		public static int GetNumberOfFiles() {
             //get number of rows in table FileMetadata
             connection.Open();
             int count = 1234567890;

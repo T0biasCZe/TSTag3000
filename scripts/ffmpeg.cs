@@ -63,8 +63,7 @@ namespace TSTag3000.scripts {
 		
 		public static bool CheckAnimated(string path) {
 			if(File.Exists(path)) {
-				//check with ffmpeg is the file has a video stream
-				string command = $"ffprobe -select_streams v:0 -show_entries stream=codec_type -of csv=p=0 \"{path}\"";
+				string command = $"ffprobe -v error -show_entries stream=codec_type:format=duration -of csv=p=0:nokey=0 \"{path}\"";
 
 				Process process = new Process();
 				process.StartInfo.FileName = "cmd.exe";
@@ -77,10 +76,17 @@ namespace TSTag3000.scripts {
 				string output = process.StandardOutput.ReadToEnd();
 
 				process.Close();
-				if(output.Contains("video")) {
-					return true;
+				if(!output.Contains("video")) {
+					return false;
 				}
-				return false;
+
+				if(output.Contains("duration=")) {
+					string duration = output.Split("duration=")[1].Split("\r\n")[0];
+					float.TryParse(duration, out float dur);
+					if(dur > 0.1f) {
+						return true;
+					}
+				}
 			}
 			return false;
 		}

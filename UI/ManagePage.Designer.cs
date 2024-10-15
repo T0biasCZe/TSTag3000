@@ -139,7 +139,7 @@ namespace TSTag3000
 			toolStrip1.Dock = DockStyle.None;
 			toolStrip1.GripStyle = ToolStripGripStyle.Hidden;
 			toolStrip1.ImageScalingSize = new Size(60, 60);
-			toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButton_ffmpegTag, toolStripButton_addToAlbum, toolStripButton_generateThumbnail, toolStripButton_batchGenerateThumbnail });
+			toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButton_addToAlbum, toolStripButton_generateThumbnail, toolStripButton_batchGenerateThumbnail, toolStripButton_ffmpegTag });
 			toolStrip1.Location = new Point(0, 0);
 			toolStrip1.Name = "toolStrip1";
 			toolStrip1.Size = new Size(1128, 88);
