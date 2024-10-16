@@ -385,8 +385,6 @@ namespace TSTag3000
 				return;
 			}
 			running = true;
-			//MessageBox.Show("1");
-			//check if tag already exists in database, if not add it. Then add it to all the selected files in the explorerBrowser1
 			var connection = Database.connection;
 			if(connection.State != ConnectionState.Open) {
 				try {
@@ -401,12 +399,12 @@ namespace TSTag3000
 				MessageBox.Show("Connection already open");
 				return;
 			}
-			//MessageBox.Show("1.2");
+
+			//check if tag already exists in database, if not add it.
 			var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
 			command.Parameters.AddWithValue("@name", tag);
 			var reader = command.ExecuteReader();
 			int tagID = -1;
-			//MessageBox.Show("2");
 			if(reader.Read()) {
 				tagID = (int)(long)reader["id"];
 			}
@@ -427,23 +425,20 @@ namespace TSTag3000
 				MessageBox.Show("Error adding tag to Database", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;
 			}
-			MessageBox.Show("3 tagid: " + tagID);
 
-			/*give tag to all selected files in explorerBrowser1, using the FileMetadata_has_tag table*/
 			int fileID = -1;
 			foreach(ShellObject? item in explorerBrowser1.SelectedItems) {
 				var command2 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
 				command2.Parameters.AddWithValue("@path", item.ParsingName);
 				var reader2 = command2.ExecuteReader();
+				//if the file doesnt exist then add it to DB
 				if(!reader2.Read()) {
-					//MessageBox.Show("3.1");
 					FileMetadata fileMetadata = new FileMetadata();
 					fileMetadata.path = item.ParsingName;
 					fileMetadata.creationDate = GetDateTime(item);
 					fileMetadata.dateIndexed = DateTime.Now;
 					fileMetadata.size = (long)item.Properties.System.Size.Value;
 
-					//MessageBox.Show("3.1.1");
 					var command3 = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata (path, creationDate, dateIndexed, size, album_ID, category_ID) VALUES (@path, @creationDate, @dateIndexed, @size, @album_ID, @category_ID)", connection);
 					command3.Parameters.AddWithValue("@path", fileMetadata.path);
 					command3.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
@@ -451,18 +446,18 @@ namespace TSTag3000
 					command3.Parameters.AddWithValue("@size", fileMetadata.size);
 					command3.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex + 1);
 					command3.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex + 1);
-					//MessageBox.Show("3.1.2");
+
 					try {
 						command3.ExecuteNonQuery();
 					}
 					catch(Exception e) {
 						MessageBox.Show(e.ToString());
 					}
-					//MessageBox.Show("3.1.3");
+
 					//get the ID of the newly added file
 					var command4 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
 					command4.Parameters.AddWithValue("@path", item.ParsingName);
-					//MessageBox.Show("3.1.4");
+
 					var reader4 = command4.ExecuteReader();
 					if(reader4.Read()) {
 						fileID = (int)(long)reader4["id"];
@@ -480,6 +475,7 @@ namespace TSTag3000
 					return;
 				}
 
+				//check if this tag already exists
 				var command5 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
 				command5.Parameters.AddWithValue("@FileMetadata_ID", fileID);
 				command5.Parameters.AddWithValue("@tag_ID", tagID);
