@@ -14,6 +14,7 @@ using TSTag3000.scripts;
 using TSTag3000.UI.controls;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Timer = System.Windows.Forms.Timer;
+using Tag = TSTag3000.db.Tag;
 
 namespace TSTag3000
 {
@@ -123,28 +124,10 @@ namespace TSTag3000
 			//general tag - yellow
 			//other tag - black
 
-			//List<string> order = new List<string>() { "meta", "general", "artist", "character", "copyright" };
-			List<string> order = new List<string>() { "copyright", "character", "artist", "general", "meta" };
-			tags = tags.OrderBy(t => order.IndexOf(t.type)).ToList();
 
 
-			foreach(var tag in tags) {
-				Color colour = Color.Black;
-				if(tag.type == "meta") {
-					colour = Color.Blue;
-				}
-				else if(tag.type == "copyright") {
-					colour = Color.Green;
-				}
-				else if(tag.type == "character") {
-					colour = Color.Aqua;
-				}
-				else if(tag.type == "artist") {
-					colour = Color.Red;
-				}
-				else if(tag.type == "general") {
-					colour = Color.Gold;
-				}
+			foreach(var tag in db.Tag.SortTags(tags)) {
+				Color colour = db.Tag.GetColour(tag.type);
 				comboBox_addTag.Items.Add(new ComboBoxItem(tag.name, tag.ID, colour));
 			}
 		}
@@ -367,8 +350,10 @@ namespace TSTag3000
 				}
 				connection.Close();
 				//MessageBox.Show("Tags: " + i + " " + j);
-				foreach(var tag in fileMetadata.tags) {
-					listBox_tags.Items.Add(tag.name);
+				foreach(var tag in db.Tag.SortTags(fileMetadata.tags)) {
+					Color colour = db.Tag.GetColour(tag.type);
+					//listBox_tags.Items.Add(tag.name);
+					listBox_tags.Items.Add(new ListBoxColourItem(colour, tag.name));
 				}
 
 			}
@@ -386,14 +371,20 @@ namespace TSTag3000
 				string tagCategory = comboBox_tagCategory.Text;
 				if(comboBox_addTag.Text.Length > 0 && tagCategory.Length > 0) {
 					AddTagToSelectedFiles(tag, tagCategory);
-					loadComboBox();
+					//loadComboBox();
 				}
 				else {
 					MessageBox.Show("invalid tag or tag category", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				}
 			}
 		}
+		bool running = false;
 		public void AddTagToSelectedFiles(string tag, string tagCategory) {
+			if(running) {
+				MessageBox.Show("Already running");
+				return;
+			}
+			running = true;
 			//MessageBox.Show("1");
 			//check if tag already exists in database, if not add it. Then add it to all the selected files in the explorerBrowser1
 			var connection = Database.connection;
@@ -420,15 +411,15 @@ namespace TSTag3000
 				tagID = (int)(long)reader["id"];
 			}
 			else {
-				command = new System.Data.SQLite.SQLiteCommand("INSERT INTO tag (name, type) VALUES (@name, @type)", connection);
-				command.Parameters.AddWithValue("@name", tag);
-				command.Parameters.AddWithValue("@type", tagCategory);
-				command.ExecuteNonQuery();
-				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
-				command.Parameters.AddWithValue("@name", tag);
-				reader = command.ExecuteReader();
-				if(reader.Read()) {
-					tagID = (int)(long)reader["id"];
+				var command0 = new System.Data.SQLite.SQLiteCommand("INSERT INTO tag (name, type) VALUES (@name, @type)", connection);
+				command0.Parameters.AddWithValue("@name", tag);
+				command0.Parameters.AddWithValue("@type", tagCategory);
+				command0.ExecuteNonQuery();
+				var command1 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+				command1.Parameters.AddWithValue("@name", tag);
+				var reader1 = command1.ExecuteReader();
+				if(reader1.Read()) {
+					tagID = (int)(long)reader1["id"];
 				}
 			}
 			if(tagID == -1) {
@@ -441,55 +432,46 @@ namespace TSTag3000
 			/*give tag to all selected files in explorerBrowser1, using the FileMetadata_has_tag table*/
 			int fileID = -1;
 			foreach(ShellObject? item in explorerBrowser1.SelectedItems) {
-				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
-				command.Parameters.AddWithValue("@path", item.ParsingName);
-				reader = command.ExecuteReader();
-				if(!reader.Read()) {
+				var command2 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+				command2.Parameters.AddWithValue("@path", item.ParsingName);
+				var reader2 = command2.ExecuteReader();
+				if(!reader2.Read()) {
 					//MessageBox.Show("3.1");
 					FileMetadata fileMetadata = new FileMetadata();
 					fileMetadata.path = item.ParsingName;
-					if(item.Properties.System.DateCreated.Value != null) {
-
-						fileMetadata.creationDate = (DateTime)item.Properties.System.DateCreated.Value;
-					}
-					else if(item.Properties.System.DateModified.Value != null) {
-						fileMetadata.creationDate = (DateTime)item.Properties.System.DateModified.Value;
-					}
-					else {
-						fileMetadata.creationDate = DateTime.UnixEpoch;
-					}
+					fileMetadata.creationDate = GetDateTime(item);
 					fileMetadata.dateIndexed = DateTime.Now;
 					fileMetadata.size = (long)item.Properties.System.Size.Value;
 
 					//MessageBox.Show("3.1.1");
-					command = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata (path, creationDate, dateIndexed, size, album_ID, category_ID) VALUES (@path, @creationDate, @dateIndexed, @size, @album_ID, @category_ID)", connection);
-					command.Parameters.AddWithValue("@path", fileMetadata.path);
-					command.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
-					command.Parameters.AddWithValue("@dateIndexed", fileMetadata.dateIndexed);
-					command.Parameters.AddWithValue("@size", fileMetadata.size);
-					command.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex + 1);
-					command.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex + 1);
+					var command3 = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata (path, creationDate, dateIndexed, size, album_ID, category_ID) VALUES (@path, @creationDate, @dateIndexed, @size, @album_ID, @category_ID)", connection);
+					command3.Parameters.AddWithValue("@path", fileMetadata.path);
+					command3.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
+					command3.Parameters.AddWithValue("@dateIndexed", fileMetadata.dateIndexed);
+					command3.Parameters.AddWithValue("@size", fileMetadata.size);
+					command3.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex + 1);
+					command3.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex + 1);
 					//MessageBox.Show("3.1.2");
 					try {
-						command.ExecuteNonQuery();
+						command3.ExecuteNonQuery();
 					}
 					catch(Exception e) {
 						MessageBox.Show(e.ToString());
 					}
 					//MessageBox.Show("3.1.3");
 					//get the ID of the newly added file
-					command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
-					command.Parameters.AddWithValue("@path", item.ParsingName);
+					var command4 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+					command4.Parameters.AddWithValue("@path", item.ParsingName);
 					//MessageBox.Show("3.1.4");
-					reader = command.ExecuteReader();
-					if(reader.Read()) {
-						fileID = (int)(long)reader["id"];
+					var reader4 = command4.ExecuteReader();
+					if(reader4.Read()) {
+						fileID = (int)(long)reader4["id"];
 					}
 
 					//MessageBox.Show("3.1.5");
 				}
 				else {
-					fileID = (int)(long)reader["id"];
+					fileID = (int)(long)reader2["id"];
 				}
 
 				if(fileID == -1) {
@@ -498,17 +480,17 @@ namespace TSTag3000
 					return;
 				}
 
-				command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
-				command.Parameters.AddWithValue("@FileMetadata_ID", fileID);
-				command.Parameters.AddWithValue("@tag_ID", tagID);
-				reader = command.ExecuteReader();
-				if(!reader.Read()) {
+				var command5 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
+				command5.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+				command5.Parameters.AddWithValue("@tag_ID", tagID);
+				var reader5 = command5.ExecuteReader();
+				if(!reader5.Read()) {
 					try {
 						//MessageBox.Show("3.2");
-						var command3 = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
-						command3.Parameters.AddWithValue("@FileMetadata_ID", fileID);
-						command3.Parameters.AddWithValue("@tag_ID", tagID);
-						command3.ExecuteNonQuery();
+						var command6 = new System.Data.SQLite.SQLiteCommand("INSERT OR IGNORE INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
+						command6.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+						command6.Parameters.AddWithValue("@tag_ID", tagID);
+						command6.ExecuteNonQuery();
 					} 
 					catch (Exception ex){
 						MessageBox.Show($"error adding tag {tagID} to file {fileID}:\n{ex.ToString()}");
@@ -521,7 +503,7 @@ namespace TSTag3000
 			//MessageBox.Show("4");
 			connection.Close();
 			MessageBox.Show($"Tag {tag} {tagID} added to file {fileID}", "Info");
-
+			running = false;
 		}
 
 		private void comboBox_addTag_SelectedIndexChanged(object sender, EventArgs e) {
@@ -561,6 +543,18 @@ namespace TSTag3000
 			if(System.IO.Directory.Exists(textBox_explorerPath.Text)) {
 				ShellObject Shell = ShellObject.FromParsingName(textBox_explorerPath.Text);
 				explorerBrowser1.Navigate(Shell);
+			}
+		}
+
+		private static DateTime GetDateTime(ShellObject? item) {
+			if(item.Properties.System.DateCreated.Value != null) {
+				return (DateTime)item.Properties.System.DateCreated.Value;
+			}
+			else if(item.Properties.System.DateModified.Value != null) {
+				return (DateTime)item.Properties.System.DateModified.Value;
+			}
+			else {
+				return DateTime.UnixEpoch;
 			}
 		}
 	}

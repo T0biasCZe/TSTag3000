@@ -113,5 +113,23 @@ namespace TSTag3000 {
 
 			Form1.LoadManagePage();
 		}
+
+		private void button_Search_Click(object sender, EventArgs e) {
+			Label label_loading = new Label();
+			label_loading.Text = "Loading...";
+			label_loading.Font = new Font("Arial", 120);
+			label_loading.AutoSize = true;
+			label_loading.ForeColor = Color.White;
+			label_loading.Location = new Point(100, 240);
+			this.Controls.Add(label_loading);
+			label_loading.BringToFront();
+			label_loading.Visible = true;
+			label_loading.Refresh();
+			label_loading.Invalidate();
+			label_loading.Update();
+
+
+			Form1.LoadSearchPage("");
+		}
 	}
 }

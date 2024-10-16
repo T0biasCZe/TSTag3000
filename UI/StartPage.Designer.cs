@@ -70,6 +70,7 @@ namespace TSTag3000
 			button_Search.TabIndex = 2;
 			button_Search.Text = "Search";
 			button_Search.UseVisualStyleBackColor = true;
+			button_Search.Click += button_Search_Click;
 			// 
 			// textBox1
 			// 

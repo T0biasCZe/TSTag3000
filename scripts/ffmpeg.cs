@@ -62,6 +62,7 @@ namespace TSTag3000.scripts {
 		}
 		
 		public static bool CheckAnimated(string path) {
+			Console.WriteLine("checking if animated: " + path);
 			if(File.Exists(path)) {
 				string command = $"ffprobe -v error -show_entries stream=codec_type:format=duration -of csv=p=0:nokey=0 \"{path}\"";
 
@@ -77,12 +78,21 @@ namespace TSTag3000.scripts {
 
 				process.Close();
 				if(!output.Contains("video")) {
+					Console.WriteLine("doesnt contain video");
 					return false;
 				}
 
 				if(output.Contains("duration=")) {
+	
+					string split = output.Split("duration=")[1];
+					//write to console with hidden characters visible
+					split = split.Replace("\r", "R").Replace("\n", "N");
+					Console.WriteLine("split: " + split);
 					string duration = output.Split("duration=")[1].Split("\r\n")[0];
-					float.TryParse(duration, out float dur);
+					Console.WriteLine(duration);
+					bool e = float.TryParse(duration.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float dur);
+					Console.WriteLine(e);
+					Console.WriteLine("duration: " + dur);
 					if(dur > 0.1f) {
 						return true;
 					}

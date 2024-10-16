@@ -41,7 +41,7 @@ namespace TSTag3000
 			toolStripButton_generateThumbnail = new ToolStripButtonNoAA();
 			toolStripButton_batchGenerateThumbnail = new ToolStripButtonNoAA();
 			imageList1 = new ImageList(components);
-			listBox_tags = new ListBox();
+			listBox_tags = new ListBoxColour();
 			toolTip1 = new ToolTip(components);
 			comboBox_addTag = new ComboBoxColour();
 			textBox_explorerPath = new TextBox();
@@ -351,7 +351,7 @@ namespace TSTag3000
 		private ImageList imageList1;
 		private Button button_addAlbum;
 		private ToolStripButtonNoAA toolStripButton_addToAlbum;
-		private ListBox listBox_tags;
+		private ListBoxColour listBox_tags;
 		private ToolTip toolTip1;
 		private ComboBoxColour comboBox_addTag;
 		private ToolStripButtonNoAA toolStripButton_ffmpegTag;

@@ -25,10 +25,14 @@ namespace TSTag3000
 			this.FormBorderStyle = FormBorderStyle.FixedSingle;
 			this.MaximizeBox = false;
 			AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
+
+			//set startPage to the existing StartPage control inside the form
+			startPage = (StartPage)this.Controls[0];
 		}
 		public static int currentPage = 0;
 		public static StartPage startPage;
 		public static ManagePage managePage;
+		public static SearchPage searchPage;
 		public static void LoadSearchPage() {
 			if(startPage == null) {
 				startPage = new StartPage();
@@ -67,6 +71,23 @@ namespace TSTag3000
 			form.MinimumSize = new Size(640, 480);
 
 			form.Form1_Resize(null, null);
+		}
+		public static void LoadSearchPage(string search) {
+			if(currentPage == 0) {
+				startPage.Dispose();
+				startPage = null;
+			}
+			else if(currentPage == 1) {
+				managePage.Dispose();
+				managePage = null;
+			}
+			form.Controls.Clear();
+			searchPage = new SearchPage();
+			form.Controls.Add(searchPage);
+
+			form.FormBorderStyle = FormBorderStyle.Sizable;
+			form.MaximizeBox = true;
+			form.Size = new Size(1120 + HORIZONTAL_BORDER, 680 + VERTICAL_BORDER);
 		}
 		//Windows border size
 		public const int HORIZONTAL_BORDER = 16;
