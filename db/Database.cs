@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.SQLite;
+using Microsoft.WindowsAPICodePack.Shell;
+using System.Data;
 namespace TSTag3000.db{
 
     public static class Database {
@@ -149,5 +151,124 @@ namespace TSTag3000.db{
             connection.Close();
             return count;
         }
-    }
+
+		public static bool AddTagToFiles(string tag, string tagCategory, List<string> paths, int albumID) {
+			var connection = Database.connection;
+			if(connection.State != ConnectionState.Open) {
+				try {
+					connection.Open();
+				}
+				catch(Exception e) {
+					MessageBox.Show(e.ToString());
+					return false;
+				}
+			}
+			else {
+				MessageBox.Show("Connection already open");
+				return false;
+			}
+
+			//check if tag already exists in database, if not add it.
+			var command_checkTag = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+			command_checkTag.Parameters.AddWithValue("@name", tag);
+			var reader = command_checkTag.ExecuteReader();
+			int tagID = -1;
+			if(reader.Read()) {
+				tagID = (int)(long)reader["id"];
+			}
+			else {
+				var command_addTag = new System.Data.SQLite.SQLiteCommand("INSERT INTO tag (name, type) VALUES (@name, @type)", connection);
+				command_addTag.Parameters.AddWithValue("@name", tag);
+				command_addTag.Parameters.AddWithValue("@type", tagCategory);
+				command_addTag.ExecuteNonQuery();
+				var command_tagId = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+				command_tagId.Parameters.AddWithValue("@name", tag);
+				var reader1 = command_tagId.ExecuteReader();
+				if(reader1.Read()) {
+					tagID = (int)(long)reader1["id"];
+				}
+			}
+			if(tagID == -1) {
+				System.Media.SystemSounds.Exclamation.Play();
+				MessageBox.Show("Error adding tag to Database", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return false;
+			}
+
+			int fileID = -1;
+			foreach(string path in paths) {
+				var command_checkFile = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+				command_checkFile.Parameters.AddWithValue("@path", path);
+				var reader2 = command_checkFile.ExecuteReader();
+				//if the file doesnt exist then add it to DB
+				if(!reader2.Read()) {
+					FileMetadata fileMetadata = new FileMetadata();
+					fileMetadata.path = path;
+					fileMetadata.creationDate = File.GetCreationTime(path);
+					fileMetadata.dateIndexed = DateTime.Now;
+					fileMetadata.size = new FileInfo(path).Length;
+
+
+					var command_addFile = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata (path, creationDate, dateIndexed, size, album_ID, category_ID) VALUES (@path, @creationDate, @dateIndexed, @size, @album_ID, @category_ID)", connection);
+					command_addFile.Parameters.AddWithValue("@path", fileMetadata.path);
+					command_addFile.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
+					command_addFile.Parameters.AddWithValue("@dateIndexed", fileMetadata.dateIndexed);
+					command_addFile.Parameters.AddWithValue("@size", fileMetadata.size);
+					command_addFile.Parameters.AddWithValue("@album_ID", albumID + 1);
+					command_addFile.Parameters.AddWithValue("@category_ID", 99_999);
+
+					try {
+						command_addFile.ExecuteNonQuery();
+					}
+					catch(Exception e) {
+						MessageBox.Show(e.ToString());
+					}
+
+					//get the ID of the newly added file
+					var command_fileId = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+					command_fileId.Parameters.AddWithValue("@path", path);
+
+					var reader4 = command_fileId.ExecuteReader();
+					if(reader4.Read()) {
+						fileID = (int)(long)reader4["id"];
+					}
+
+					//MessageBox.Show("3.1.5");
+				}
+				else {
+					fileID = (int)(long)reader2["id"];
+				}
+
+				if(fileID == -1) {
+					System.Media.SystemSounds.Exclamation.Play();
+					MessageBox.Show("Error adding file to Database\n" + path, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					return false;
+				}
+
+				//check if this tag already exists
+				var command_checkFileTag = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
+				command_checkFileTag.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+				command_checkFileTag.Parameters.AddWithValue("@tag_ID", tagID);
+				var reader5 = command_checkFileTag.ExecuteReader();
+				if(!reader5.Read()) {
+					try {
+						//MessageBox.Show("3.2");
+						var command_addFileTag = new System.Data.SQLite.SQLiteCommand("INSERT OR IGNORE INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
+						command_addFileTag.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+						command_addFileTag.Parameters.AddWithValue("@tag_ID", tagID);
+						command_addFileTag.ExecuteNonQuery();
+					}
+					catch(Exception ex) {
+						MessageBox.Show($"error adding tag {tagID} to file {fileID}:\n{ex.ToString()}");
+					}
+				}
+				else {
+					MessageBox.Show("Tag already exists in file", "Info");
+				}
+			}
+			//MessageBox.Show("4");
+			connection.Close();
+			MessageBox.Show($"Tag {tag} {tagID} added to file {fileID}", "Info");
+			return true;
+		}
+	}
 }

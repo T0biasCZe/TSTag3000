@@ -18,7 +18,7 @@ using Tag = TSTag3000.db.Tag;
 
 namespace TSTag3000
 {
-    public partial class ManagePage : UserControl {
+	public partial class ManagePage : UserControl {
 		public ManagePage() {
 			InitializeComponent();
 			this.BackColor = Color.Transparent;
@@ -401,21 +401,21 @@ namespace TSTag3000
 			}
 
 			//check if tag already exists in database, if not add it.
-			var command = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
-			command.Parameters.AddWithValue("@name", tag);
-			var reader = command.ExecuteReader();
+			var command_checkTag = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+			command_checkTag.Parameters.AddWithValue("@name", tag);
+			var reader = command_checkTag.ExecuteReader();
 			int tagID = -1;
 			if(reader.Read()) {
 				tagID = (int)(long)reader["id"];
 			}
 			else {
-				var command0 = new System.Data.SQLite.SQLiteCommand("INSERT INTO tag (name, type) VALUES (@name, @type)", connection);
-				command0.Parameters.AddWithValue("@name", tag);
-				command0.Parameters.AddWithValue("@type", tagCategory);
-				command0.ExecuteNonQuery();
-				var command1 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
-				command1.Parameters.AddWithValue("@name", tag);
-				var reader1 = command1.ExecuteReader();
+				var command_addTag = new System.Data.SQLite.SQLiteCommand("INSERT INTO tag (name, type) VALUES (@name, @type)", connection);
+				command_addTag.Parameters.AddWithValue("@name", tag);
+				command_addTag.Parameters.AddWithValue("@type", tagCategory);
+				command_addTag.ExecuteNonQuery();
+				var command_tagId = new System.Data.SQLite.SQLiteCommand("SELECT * FROM tag WHERE name = @name", connection);
+				command_tagId.Parameters.AddWithValue("@name", tag);
+				var reader1 = command_tagId.ExecuteReader();
 				if(reader1.Read()) {
 					tagID = (int)(long)reader1["id"];
 				}
@@ -428,9 +428,9 @@ namespace TSTag3000
 
 			int fileID = -1;
 			foreach(ShellObject? item in explorerBrowser1.SelectedItems) {
-				var command2 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
-				command2.Parameters.AddWithValue("@path", item.ParsingName);
-				var reader2 = command2.ExecuteReader();
+				var command_checkFile = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+				command_checkFile.Parameters.AddWithValue("@path", item.ParsingName);
+				var reader2 = command_checkFile.ExecuteReader();
 				//if the file doesnt exist then add it to DB
 				if(!reader2.Read()) {
 					FileMetadata fileMetadata = new FileMetadata();
@@ -439,26 +439,26 @@ namespace TSTag3000
 					fileMetadata.dateIndexed = DateTime.Now;
 					fileMetadata.size = (long)item.Properties.System.Size.Value;
 
-					var command3 = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata (path, creationDate, dateIndexed, size, album_ID, category_ID) VALUES (@path, @creationDate, @dateIndexed, @size, @album_ID, @category_ID)", connection);
-					command3.Parameters.AddWithValue("@path", fileMetadata.path);
-					command3.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
-					command3.Parameters.AddWithValue("@dateIndexed", fileMetadata.dateIndexed);
-					command3.Parameters.AddWithValue("@size", fileMetadata.size);
-					command3.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex + 1);
-					command3.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex + 1);
+					var command_addFile = new System.Data.SQLite.SQLiteCommand("INSERT INTO FileMetadata (path, creationDate, dateIndexed, size, album_ID, category_ID) VALUES (@path, @creationDate, @dateIndexed, @size, @album_ID, @category_ID)", connection);
+					command_addFile.Parameters.AddWithValue("@path", fileMetadata.path);
+					command_addFile.Parameters.AddWithValue("@creationDate", fileMetadata.creationDate);
+					command_addFile.Parameters.AddWithValue("@dateIndexed", fileMetadata.dateIndexed);
+					command_addFile.Parameters.AddWithValue("@size", fileMetadata.size);
+					command_addFile.Parameters.AddWithValue("@album_ID", listBox_albums.SelectedIndex + 1);
+					command_addFile.Parameters.AddWithValue("@category_ID", listBox_categories.SelectedIndex + 1);
 
 					try {
-						command3.ExecuteNonQuery();
+						command_addFile.ExecuteNonQuery();
 					}
 					catch(Exception e) {
 						MessageBox.Show(e.ToString());
 					}
 
 					//get the ID of the newly added file
-					var command4 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
-					command4.Parameters.AddWithValue("@path", item.ParsingName);
+					var command_fileId = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata WHERE path = @path", connection);
+					command_fileId.Parameters.AddWithValue("@path", item.ParsingName);
 
-					var reader4 = command4.ExecuteReader();
+					var reader4 = command_fileId.ExecuteReader();
 					if(reader4.Read()) {
 						fileID = (int)(long)reader4["id"];
 					}
@@ -476,17 +476,17 @@ namespace TSTag3000
 				}
 
 				//check if this tag already exists
-				var command5 = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
-				command5.Parameters.AddWithValue("@FileMetadata_ID", fileID);
-				command5.Parameters.AddWithValue("@tag_ID", tagID);
-				var reader5 = command5.ExecuteReader();
+				var command_checkFileTag = new System.Data.SQLite.SQLiteCommand("SELECT * FROM FileMetadata_has_tag WHERE FileMetadata_ID = @FileMetadata_ID AND tag_ID = @tag_ID", connection);
+				command_checkFileTag.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+				command_checkFileTag.Parameters.AddWithValue("@tag_ID", tagID);
+				var reader5 = command_checkFileTag.ExecuteReader();
 				if(!reader5.Read()) {
 					try {
 						//MessageBox.Show("3.2");
-						var command6 = new System.Data.SQLite.SQLiteCommand("INSERT OR IGNORE INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
-						command6.Parameters.AddWithValue("@FileMetadata_ID", fileID);
-						command6.Parameters.AddWithValue("@tag_ID", tagID);
-						command6.ExecuteNonQuery();
+						var command_addFileTag = new System.Data.SQLite.SQLiteCommand("INSERT OR IGNORE INTO FileMetadata_has_tag (FileMetadata_ID, tag_ID) VALUES (@FileMetadata_ID, @tag_ID)", connection);
+						command_addFileTag.Parameters.AddWithValue("@FileMetadata_ID", fileID);
+						command_addFileTag.Parameters.AddWithValue("@tag_ID", tagID);
+						command_addFileTag.ExecuteNonQuery();
 					} 
 					catch (Exception ex){
 						MessageBox.Show($"error adding tag {tagID} to file {fileID}:\n{ex.ToString()}");
